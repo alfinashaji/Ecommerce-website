@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        display: flex;
+        background: #f4f6f9;
+      }
+
+      .sidebar {
+        height: 100vh;
+        background: #fff;
+        padding: 20px;
+        border-right: 1px solid #ddd;
+      }
+
+      .logo {
+        width: auto;
+        height: 30px;
+      }
+
+      .menu a {
+        display: block;
+        padding: 12px;
+        margin-bottom: 8px;
+        text-decoration: none;
+        color: #333;
+        border-radius: 6px;
+        transition: 0.3s;
+        font-size: 14px;
+      }
+
+      .menu a:hover,
+      .menu a.active {
+        background: #cde7e6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar col-2 px-4">
+      <img src="/images/logo.png" class="logo mb-4" alt="logo" />
+
+      <div class="menu">
+        <a href="/admin/dashboard" class="active">Home</a>
+        <a href="/admin/product">Products</a>
+        <a href="/admin/orders">Orders</a>
+        <a href="/admin/users">Users</a>
+        <a href="/admin/categories">Category Management</a>
+        <a href="/admin/brands">Brand Management</a>
+        <a href="/admin/category-offers">Category Offers</a>
+        <a href="#">Coupon Management</a>
+        <a href="#">Sales Report</a>
+      </div>
+    </div>
+  </body>
+</html>

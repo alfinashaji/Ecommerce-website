@@ -1,0 +1,326 @@
+/* Page background */
+body {
+  background-color: #9bbfc0; /* soft teal */
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+}
+
+/* Main form card */
+.form-box {
+  background: #f4f4f4;
+  width: 380px;
+  padding: 30px 35px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Logo */
+.logo {
+  height: 30px;
+}
+
+/* Title */
+.title {
+  text-align: center;
+  font-weight: 600;
+  margin: 20px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Input group styling */
+.input-group {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.input-group i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  font-size: 14px;
+}
+
+.input-group input {
+  padding-left: 35px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0;
+  font-size: 14px;
+  background: transparent;
+}
+
+.input-group input:focus {
+  box-shadow: none;
+  border-bottom: 1px solid #6bb7b9;
+}
+
+/* Eye icon */
+.eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #aaa;
+}
+
+/* Button */
+.btn-custom {
+  width: 100%;
+  background-color: #7fbec0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.btn-custom:hover {
+  background-color: #6aaeb0;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 12px;
+  color: #777;
+}
+
+.footer a {
+  text-decoration: none;
+  color: #6aaeb0;
+  font-weight: 500;
+}
+
+/* Login css */
+
+/* ===== LOGIN PAGE MATCHING SIGNUP DESIGN ===== */
+
+/* Override bootstrap input group */
+.input-group {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+/* Remove default bootstrap styles */
+.input-group-text {
+  background: transparent !important;
+  border: none !important;
+  padding: 0;
+}
+
+/* Icons inside input */
+.input-group-text i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  font-size: 14px;
+  z-index: 2;
+}
+
+/* Input styling */
+.input-group .form-control {
+  border: none;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0;
+  padding-left: 35px;
+  font-size: 14px;
+  background: transparent;
+}
+
+/* Focus effect */
+.input-group .form-control:focus {
+  box-shadow: none;
+  border-bottom: 1px solid #6bb7b9;
+}
+
+/* Eye icon (right side) */
+.input-group-text:last-child i {
+  left: auto;
+  right: 10px;
+  cursor: pointer;
+}
+
+/* Button match */
+.btn-primary {
+  background-color: #7fbec0 !important;
+  border: none;
+  font-size: 14px;
+  padding: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #6aaeb0 !important;
+}
+
+/* Links */
+a {
+  color: #6aaeb0;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.input-group {
+  position: relative;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #aaa;
+  z-index: 10; /* IMPORTANT */
+}
+
+.input-group input {
+  padding-right: 35px; /* space for eye icon */
+}
+
+/* OTP Styling */
+
+.box {
+  background: #f4f4f4;
+  padding: 35px 40px;
+  border-radius: 20px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Logo + title spacing (if you add logo later) */
+.box h4 {
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+/* Description */
+.box p {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+/* OTP boxes */
+.otp-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.otp-input {
+  width: 42px;
+  height: 42px;
+  text-align: center;
+  font-size: 16px;
+  border: none;
+  background: #e0e0e0;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+/* Focus style */
+.otp-input:focus {
+  outline: none;
+  background: #d5d5d5;
+}
+
+/* Timer */
+.timer {
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+}
+
+/* Button */
+.btn-custom {
+  background: #7fbec0;
+  color: white;
+  width: 100%;
+  margin-top: 15px;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.btn-custom:hover {
+  background: #6aaeb0;
+}
+
+/* Resend */
+.resend-btn {
+  border: none;
+  background: none;
+  color: #6aaeb0;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.resend-btn:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+/* forgot password */
+
+.card {
+  background: #f4f4f4 !important;
+  border: none !important;
+  border-radius: 20px !important;
+  width: 380px !important;
+  padding: 30px 35px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.card h4 {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Input style */
+.card .form-control {
+  border: none;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+}
+
+.card .form-control:focus {
+  box-shadow: none;
+  border-bottom: 1px solid #6bb7b9;
+}
+
+/* Button */
+.btn-primary {
+  background-color: #7fbec0 !important;
+  border: none;
+  font-size: 14px;
+  padding: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #6aaeb0 !important;
+}

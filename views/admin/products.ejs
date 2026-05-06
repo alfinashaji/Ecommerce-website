@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Product Management</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .modal-content {
+        border-radius: 15px;
+        border: none;
+        background-color: #f1f1f1;
+      }
+      .form-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #333;
+      }
+      .form-control,
+      .form-select {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 10px;
+      }
+
+      /* Variant Box Styling */
+      .variant-box {
+        background: transparent;
+        border: none !important;
+        padding: 0 !important;
+        margin-bottom: 2rem;
+      }
+      .add-variant-btn {
+        background-color: #000;
+        color: #fff;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        padding: 5px 15px;
+        float: right;
+      }
+
+      /* Image Preview Styling */
+      .preview-main {
+        width: 100%;
+        max-width: 250px;
+        height: 250px;
+        background: #e9e9e9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px auto;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .preview-thumbnails {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .thumb-wrapper {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .thumb-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .thumb-wrapper .remove-img {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .btn-save {
+        background-color: #007bff;
+        color: white;
+        border-radius: 5px;
+        padding: 8px 40px;
+        border: none;
+      }
+      .btn-cancel {
+        background-color: #bbb;
+        color: white;
+        border-radius: 5px;
+        padding: 8px 40px;
+        border: none;
+      }
+
+      .section-title {
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        color: #555;
+      }
+    </style>
+  </head>
+
+  <body>
+    <%- include("../partials/sidebar") %>
+    <div class="col-10 px-5 mt-5">
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Product Management</h3>
+        <div class="d-flex gap-2">
+          <button
+            class="btn btn-dark"
+            data-bs-toggle="modal"
+            data-bs-target="#addModal"
+          >
+            + Add Product
+          </button>
+        </div>
+      </div>
+      <div class="input-group pb-4">
+        <input
+          type="text"
+          id="searchInput"
+          class="form-control"
+          placeholder="Search name or brand..."
+          onkeypress="if (event.key === 'Enter') performSearch();"
+        />
+        <button
+          class="btn btn-primary"
+          style="
+            margin-left: 10px;
+            border-top-left-radius: inherit;
+            border-bottom-left-radius: inherit;
+          "
+          onclick="performSearch()"
+        >
+          Search
+        </button>
+        <button
+          class="btn btn-outline-secondary"
+          style="margin-left: 10px; border-radius: 0"
+          onclick="clearSearch()"
+        >
+          Clear
+        </button>
+      </div>
+      <!-- TABLE -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table class="table table-hover text-center align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+        <!-- Add this below the card containing the table -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div id="paginationInfo" class="text-muted"></div>
+          <nav>
+            <ul class="pagination mb-0" id="paginationControls">
+              <!-- Pagination buttons will be injected here -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content p-4">
+          <div class="mb-3">
+            <label class="form-label">Product Name</label>
+            <input
+              id="name"
+              class="form-control"
+              placeholder="Enter product name"
+            />
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <select id="category" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Brand</label>
+              <select id="brand" class="form-select"></select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea id="description" class="form-control" rows="4"></textarea>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <span class="section-title">Variants</span>
+            <button class="add-variant-btn" onclick="addVariant()">
+              Add Variant
+            </button>
+          </div>
+
+          <div id="variantContainer"></div>
+
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button class="btn-save" onclick="submitProduct()">Save</button>
+            <button class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="editModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content p-4">
+          <input type="hidden" id="editId" />
+          <div class="mb-3">
+            <label class="form-label">Product Name</label>
+            <input id="editName" class="form-control" />
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <select id="editCategory" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Brand</label>
+              <select id="editBrand" class="form-select"></select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea
+              id="editDescription"
+              class="form-control"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4">
+            <span class="section-title">Variants</span>
+            <button class="add-variant-btn" onclick="addEditVariant()">
+              Add Variant
+            </button>
+          </div>
+
+          <div id="editVariantContainer"></div>
+
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button
+              class="btn-save"
+              style="background-color: #0d6efd"
+              onclick="updateProduct()"
+            >
+              Update
+            </button>
+            <button class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="viewModal">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content p-3">
+          <h5>Images</h5>
+          <div id="imageContainer" class="d-flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="successModal">
+      <div class="modal-dialog">
+        <div class="modal-content text-center p-4">
+          <h5 class="mb-3 text-success">Success</h5>
+          <p id="successMessage"></p>
+          <button class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "/api/product";
+      const CATEGORY_API = "/admin/category";
+      const BRAND_API = "/admin/brand";
+
+      function performSearch() {
+        const input = document.getElementById("searchInput");
+        const query = input.value.trim(); // .trim() removes accidental spaces
+
+        if (query === "") {
+          loadProducts();
+        } else {
+          loadProducts(query);
+        }
+      }
+
+      function clearSearch() {
+        document.getElementById("searchInput").value = "";
+        loadProducts();
+      }
+
+      let currentPage = 1;
+      const limit = 2;
+
+      async function loadProducts(searchQuery = "", page = 1) {
+        currentPage = page; // Update global state
+        const productTable = document.getElementById("productTable");
+        const paginationControls =
+          document.getElementById("paginationControls");
+        const paginationInfo = document.getElementById("paginationInfo");
+
+        let url = `${API}?page=${page}&limit=${limit}`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+
+          // 1. Render Table Rows
+          productTable.innerHTML = "";
+          if (!data.products || data.products.length === 0) {
+            productTable.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No products found</td></tr>`;
+            paginationControls.innerHTML = "";
+            paginationInfo.innerText = "";
+            return;
+          }
+
+          data.products.forEach((p) => {
+            const minPrice = p.variants?.length
+              ? Math.min(...p.variants.map((v) => v.price || 0))
+              : 0;
+            productTable.innerHTML += `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.category?.name || "-"}</td>
+          <td>${p.brand?.name || "-"}</td>
+          <td>₹${minPrice}</td>
+          <td><span class="badge ${p.isListed ? "bg-success" : "bg-secondary"}">${p.isListed ? "Listed" : "Unlisted"}</span></td>
+          <td>
+            <button class="btn btn-info btn-sm text-white" onclick="viewImages('${p._id}')">View</button>
+            <button class="btn btn-warning btn-sm text-white" onclick="openEdit('${p._id}')">Edit</button>
+            <button class="btn btn-sm ${p.isListed ? "btn-danger" : "btn-success"}" onclick="toggleProduct('${p._id}')">
+              ${p.isListed ? "Unlist" : "List"}
+            </button>
+          </td>
+        </tr>`;
+          });
+
+          //Render Pagination Controls
+          renderPagination(data.totalPages, data.currentPage, searchQuery);
+        } catch (err) {
+          console.error("Error loading products:", err);
+        }
+      }
+
+      function renderPagination(totalPages, activePage, query) {
+        const container = document.getElementById("paginationControls");
+        container.innerHTML = "";
+
+        // Previous Button
+        container.innerHTML += `
+    <li class="page-item ${activePage === 1 ? "disabled" : ""}">
+      <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage - 1})"><span aria-hidden="true">&laquo;</span></a>
+    </li>`;
+
+        // Page Numbers
+        for (let i = 1; i <= totalPages; i++) {
+          container.innerHTML += `
+      <li class="page-item ${i === activePage ? "active" : ""}">
+        <a class="page-link" href="#" onclick="loadProducts('${query}', ${i})">${i}</a>
+      </li>`;
+        }
+
+        // Next Button
+        container.innerHTML += `
+    <li class="page-item ${activePage === totalPages ? "disabled" : ""}">
+      <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage + 1})"><span aria-hidden="true">&raquo;</span></a>
+    </li>`;
+      }
+
+      function getVariantHTML(v = null, isEdit = false) {
+        return `
+      <div class="variant-box border-bottom pb-4 mb-4">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Size</label>
+            <select class="form-select size">
+                <option value="S" ${v?.size === "S" ? "selected" : ""}>S</option>
+                <option value="M" ${v?.size === "M" ? "selected" : ""}>M</option>
+                <option value="L" ${v?.size === "L" ? "selected" : ""}>L</option>
+                <option value="XL" ${v?.size === "XL" ? "selected" : ""}>XL</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label d-block">Color</label>
+            <input type="color" class="form-control form-control-color w-100 color" value="${v?.color || "#000000"}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Stock Quantity</label>
+            <input class="form-control stock" placeholder="0" value="${v?.stock || ""}">
+          </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Price</label>
+            <input class="form-control price" placeholder="₹" value="${v?.price || ""}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Upload Images</label>
+          <input type="file" class="form-control images" multiple>
+        </div>
+        <div class="preview-main">
+           <img src="https://via.placeholder.com/150?text=No+Image" class="main-preview-img" style="max-width:100%">
+        </div>
+        <div class="preview-thumbnails">
+           ${
+             isEdit && v?.images
+               ? v.images
+                   .map(
+                     (img) => `
+            <div class="thumb-wrapper">
+                <img src="${img}">
+                <button class="remove-img" onclick="this.parentElement.remove()">×</button>
+                <input type="hidden" class="oldImage" value="${img}">
+            </div>`,
+                   )
+                   .join("")
+               : ""
+           }
+        </div>
+        <button class="btn btn-link text-danger btn-sm p-0 mt-2" onclick="this.parentElement.remove()">Remove Variant</button>
+      </div>`;
+      }
+
+      function addVariant() {
+        variantContainer.insertAdjacentHTML("beforeend", getVariantHTML());
+      }
+
+      function addEditVariant() {
+        editVariantContainer.insertAdjacentHTML("beforeend", getVariantHTML());
+      }
+
+      document.addEventListener("change", (e) => {
+        if (e.target.classList.contains("images")) {
+          const container = e.target.closest(".variant-box");
+          const thumbContainer = container.querySelector(".preview-thumbnails");
+          const mainPreview = container.querySelector(".main-preview-img");
+          thumbContainer.innerHTML = "";
+
+          Array.from(e.target.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              if (index === 0) mainPreview.src = event.target.result;
+              thumbContainer.innerHTML += `
+            <div class="thumb-wrapper">
+                <img src="${event.target.result}">
+            </div>`;
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+      });
+
+      async function submitProduct() {
+        const formData = new FormData();
+        formData.append("name", document.getElementById("name").value);
+        formData.append("description", description.value);
+        formData.append("category", category.value);
+        formData.append("brand", brand.value);
+
+        let variants = [];
+        document
+          .querySelectorAll("#variantContainer .variant-box")
+          .forEach((box) => {
+            const files = box.querySelector(".images").files;
+            let images = [];
+            for (let i = 0; i < files.length; i++) {
+              formData.append("variantImages", files[i]);
+              images.push("temp");
+            }
+            variants.push({
+              size: box.querySelector(".size").value,
+              color: box.querySelector(".color").value,
+              price: box.querySelector(".price").value,
+              stock: box.querySelector(".stock").value,
+              images,
+            });
+          });
+        formData.append("variants", JSON.stringify(variants));
+        await fetch(`${API}/add`, {method: "POST", body: formData});
+        location.reload();
+      }
+
+      async function openEdit(id) {
+        const res = await fetch(`${API}/edit/${id}`);
+        const p = await res.json();
+        editId.value = p._id;
+        editName.value = p.name;
+        editDescription.value = p.description;
+        await loadEditCategories(p.category?._id);
+        await loadEditBrands(p.brand?._id);
+        editVariantContainer.innerHTML = "";
+        p.variants.forEach((v) => {
+          editVariantContainer.insertAdjacentHTML(
+            "beforeend",
+            getVariantHTML(v, true),
+          );
+        });
+        new bootstrap.Modal(editModal).show();
+      }
+
+      async function updateProduct() {
+        const formData = new FormData();
+        formData.append("name", editName.value);
+        formData.append("description", editDescription.value);
+        formData.append("category", editCategory.value);
+        formData.append("brand", editBrand.value);
+
+        let variants = [];
+        document
+          .querySelectorAll("#editVariantContainer .variant-box")
+          .forEach((box) => {
+            let oldImages = [];
+            box
+              .querySelectorAll(".oldImage")
+              .forEach((img) => oldImages.push(img.value));
+            const files = box.querySelector(".images").files;
+            let images = [...oldImages];
+            for (let i = 0; i < files.length; i++) {
+              formData.append("variantImages", files[i]);
+              images.push("temp");
+            }
+            variants.push({
+              size: box.querySelector(".size").value,
+              color: box.querySelector(".color").value,
+              price: box.querySelector(".price").value,
+              stock: box.querySelector(".stock").value,
+              images,
+            });
+          });
+        formData.append("variants", JSON.stringify(variants));
+        await fetch(`${API}/edit/${editId.value}`, {
+          method: "PUT",
+          body: formData,
+        });
+        location.reload();
+      }
+
+      async function viewImages(id) {
+        const res = await fetch(`${API}/edit/${id}`);
+        const p = await res.json();
+        imageContainer.innerHTML = p.variants
+          .flatMap((v) => v.images)
+          .map(
+            (img) => `<img src="${img}" width="100" class="rounded shadow-sm">`,
+          )
+          .join("");
+        new bootstrap.Modal(viewModal).show();
+      }
+
+      async function toggleProduct(id) {
+        await fetch(`${API}/toggle/${id}`, {method: "PATCH"});
+        const currentQuery = document.getElementById("searchInput").value;
+        loadProducts(currentQuery);
+      }
+
+      async function loadCategories() {
+        const res = await fetch(CATEGORY_API);
+        const data = await res.json();
+        category.innerHTML = data
+          .map((c) => `<option value="${c._id}">${c.name}</option>`)
+          .join("");
+      }
+
+      async function loadBrands() {
+        const res = await fetch(BRAND_API);
+        const data = await res.json();
+        brand.innerHTML = data
+          .map((b) => `<option value="${b._id}">${b.name}</option>`)
+          .join("");
+      }
+
+      async function loadEditCategories(selected) {
+        const res = await fetch(CATEGORY_API);
+        const data = await res.json();
+        editCategory.innerHTML = data
+          .map(
+            (c) =>
+              `<option value="${c._id}" ${c._id === selected ? "selected" : ""}>${c.name}</option>`,
+          )
+          .join("");
+      }
+
+      async function loadEditBrands(selected) {
+        const res = await fetch(BRAND_API);
+        const data = await res.json();
+        editBrand.innerHTML = data
+          .map(
+            (b) =>
+              `<option value="${b._id}" ${b._id === selected ? "selected" : ""}>${b.name}</option>`,
+          )
+          .join("");
+      }
+
+      loadProducts();
+      loadCategories();
+      loadBrands();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

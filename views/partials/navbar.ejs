@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Navbar UI</title>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    /* Navbar Container */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 80px;
+      background: #e6e6e6;
+      width: 100%;
+    }
+
+    /* Logo */
+    .logo img {
+      height: 40px; /* Adjusted for better visibility */
+      object-fit: contain;
+    }
+
+    /* Search Container */
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #ddd;
+      border-radius: 5px;
+      padding: 5px 15px;
+      width: 60%; /* Adjust width as needed */
+      transition: background 0.3s;
+    }
+
+    .search-box:focus-within {
+      background: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 100%;
+      padding: 8px 30px 8px 10px;
+      font-size: 14px;
+    }
+
+    .search-box i.fa-search {
+      color: #555;
+      cursor: pointer;
+    }
+
+    /* Clear Icon (X) */
+    .clear-btn {
+      position: absolute;
+      right: 15px;
+      color: #888;
+      cursor: pointer;
+      display: none; /* Hidden by default */
+      font-size: 14px;
+    }
+
+    .clear-btn:hover {
+      color: #000;
+    }
+
+    /* Right section */
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      justify-content: flex-end;
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      cursor: pointer;
+      color: #000;
+      text-decoration: none;
+    }
+
+    /* Login Button */
+    .login-btn {
+      padding: 6px 20px;
+      border: 1px solid black;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .login-btn:hover {
+      background: #000;
+      color: #fff;
+    }
+
+    .profile {
+      font-size: 24px;
+      cursor: pointer;
+      color: #000;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .navbar { padding: 10px 20px; }
+      .search-box { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="navbar">
+    <!-- Logo -->
+    <div class="logo">
+      <a href="/home">
+        <img src="/images/logo.png" alt="logo" />
+      </a>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-wrapper">
+    <form action="/search" method="GET" class="search-box" id="searchForm">
+    <i class="fa fa-search" onclick="this.parentElement.submit()"></i>
+    <input
+    name="search" 
+  id="searchInput"
+  class="form-control"
+  placeholder="Search..."
+value="<%= typeof query !== 'undefined' ? query : '' %>"
+/>
+    <i class="fa fa-times-circle clear-btn" id="clearBtn"></i>
+</form>
+    </div>
+
+    
+    <div class="nav-right">
+      <a href="/wishlist" class="nav-icon"><i class="fa fa-heart"></i></a>
+      <a href="/cart" class="nav-icon"><i class="fa fa-shopping-cart"></i></a>
+
+      <% if (!locals.user) { %>
+        <a href="/api/auth/login">
+          <button class="login-btn">LOGIN</button>
+        </a>
+      <% } %>
+
+      <a href="/profile" class="nav-icon">
+        <i class="fa fa-user-circle profile"></i>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('clearBtn');
+    const searchForm = document.getElementById('searchForm');
+
+    // Function to toggle the clear button
+    function toggleClearButton() {
+      if (searchInput.value.length > 0) {
+        clearBtn.style.display = 'block';
+      } else {
+        clearBtn.style.display = 'none';
+      }
+    }
+
+    // Run on every 
+    searchInput.addEventListener('input', toggleClearButton);
+
+    window.addEventListener('DOMContentLoaded', toggleClearButton);
+
+    // Clear input functionality
+    clearBtn.addEventListener('click', () => {
+  searchInput.value = '';
+  toggleClearButton();
+
+ 
+  window.location.href = "/products";
+});
+  </script>
+</body>
+</html>

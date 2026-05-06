@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Verify OTP</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+
+  <body>
+    <div class="box">
+      <div class="d-flex align-items-center gap-2 mb-5">
+        <img src="/images/Logo.png" class="logo" alt="logo" />
+        <strong>GLAMORA</strong>
+      </div>
+
+      <p>
+        Enter the 6-digit OTP sent to<br />
+        <strong><%= email %></strong>
+      </p>
+
+      <!-- OTP FORM -->
+      <form action="/api/auth/verify-forgot-otp" method="POST" id="otpForm">
+        <% if (error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+        <input type="hidden" name="email" value="<%= email %>" />
+
+        <div class="otp-container">
+          <input type="text" maxlength="1" class="otp-input" />
+          <input type="text" maxlength="1" class="otp-input" />
+          <input type="text" maxlength="1" class="otp-input" />
+          <input type="text" maxlength="1" class="otp-input" />
+          <input type="text" maxlength="1" class="otp-input" />
+          <input type="text" maxlength="1" class="otp-input" />
+        </div>
+
+        <!-- hidden real otp -->
+        <input type="hidden" name="otp" id="otpValue" />
+
+        <div class="timer">Resend OTP in <span id="countdown">30</span>s</div>
+
+        <button type="submit" class="btn btn-custom">Submit</button>
+      </form>
+
+      <!-- RESEND -->
+      <form action="/api/auth/resend-forgot-otp" method="POST" class="mb-5">
+        <input type="hidden" name="email" value="<%= email %>" />
+
+        <button id="resendBtn" class="resend-btn" disabled>Resend OTP</button>
+      </form>
+    </div>
+
+    <script>
+      // otp box handle
+      const inputs = document.querySelectorAll(".otp-input");
+      const otpValue = document.getElementById("otpValue");
+
+      inputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+          if (input.value && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+          }
+
+          let otp = "";
+          inputs.forEach((i) => (otp += i.value));
+          otpValue.value = otp;
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Backspace" && !input.value && index > 0) {
+            inputs[index - 1].focus();
+          }
+        });
+      });
+      const countdown = document.getElementById("countdown");
+      const resendBtn = document.getElementById("resendBtn");
+
+      // backend controlled expiry (IMPORTANT)
+      const otpExpiry = Number("<%= otpExpiry || 0 %>");
+
+      function updateTimer() {
+        const now = Date.now();
+        const timeLeft = Math.max(0, Math.floor((otpExpiry - now) / 1000));
+
+        countdown.innerText = timeLeft;
+
+        resendBtn.disabled = timeLeft > 0;
+      }
+
+      updateTimer();
+
+      const timer = setInterval(() => {
+        updateTimer();
+
+        if (otpExpiry - Date.now() <= 0) {
+          clearInterval(timer);
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Address</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #f3f3f3;
+        font-family: Arial, sans-serif;
+      }
+
+      .form-container {
+        max-width: 800px;
+        margin: 60px auto;
+      }
+
+      .section-title {
+        font-size: 12px;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .form-control {
+        border: 1px solid #ddd;
+        border-radius: 0;
+        height: 45px;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+
+      textarea.form-control {
+        height: 80px;
+        resize: none;
+      }
+
+      .row-gap {
+        display: flex;
+        gap: 15px;
+      }
+
+      .submit-btn {
+        background: #000;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        width: 200px;
+        margin-top: 10px;
+      }
+
+      .submit-btn:hover {
+        background: #222;
+      }
+
+      #message {
+        min-height: 20px;
+        text-align: center;
+        font-weight: 500;
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-top: 15px;
+        text-decoration: none;
+        color: #000;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- NAVBAR -->
+    <%- include("../partials/navbar") %>
+
+    <div class="form-container">
+      <!-- TOP MESSAGE -->
+      <div id="message" class="mb-2"></div>
+
+      <form id="editAddressForm">
+        <!-- CONTACT INFO -->
+        <div class="section-title">CONTACT INFO</div>
+
+        <input
+          type="text"
+          name="phone"
+          id="phone"
+          class="form-control"
+          placeholder="Phone"
+          value="<%= address.phone %>"
+          required
+        />
+        <small id="phoneError" class="text-danger"></small>
+
+        <!-- SHIPPING ADDRESS -->
+        <div class="section-title mt-3">SHIPPING ADDRESS</div>
+
+        <input
+          type="text"
+          name="name"
+          class="form-control"
+          placeholder="FullName"
+          value="<%= address.name %>"
+          required
+        />
+
+        <input
+          type="text"
+          id="state"
+          name="state"
+          class="form-control"
+          placeholder="State / Region"
+          value="<%= address.state %>"
+          required
+        />
+
+        <textarea
+          name="street"
+          class="form-control"
+          placeholder="Address"
+          required
+        >
+<%= address.street %></textarea
+        >
+
+        <div class="row-gap">
+          <input
+            type="text"
+            id="city"
+            name="city"
+            class="form-control"
+            placeholder="City"
+            value="<%= address.city %>"
+            required
+          />
+
+          <input
+            type="text"
+            id="pincode"
+            name="pincode"
+            class="form-control"
+            placeholder="Postal Code"
+            value="<%= address.pincode %>"
+            required
+          />
+        </div>
+
+        <!-- PINCODE ERROR -->
+        <small id="pincodeError" class="text-danger"></small>
+
+        <button class="submit-btn">Submit</button>
+      </form>
+      <a href="/profile/address" class="back-link">
+        <i class="fa fa-arrow-left"></i> Back
+      </a>
+    </div>
+
+    <!-- FOOTER -->
+    <%- include("../partials/footer") %>
+
+    <script>
+      const addressId = "<%= address._id %>";
+
+      const form = document.getElementById("editAddressForm");
+      const message = document.getElementById("message");
+
+      const phoneInput = document.getElementById("phone");
+      const phoneError = document.getElementById("phoneError");
+
+      const pincodeInput = document.getElementById("pincode");
+      const cityInput = document.getElementById("city");
+      const stateInput = document.getElementById("state");
+      const pincodeError = document.getElementById("pincodeError");
+
+      let isPincodeValid = true;
+
+      // pincode validation
+      pincodeInput.addEventListener("blur", async () => {
+        const pincode = pincodeInput.value.trim();
+
+        pincodeError.innerText = "";
+        isPincodeValid = false;
+
+        if (pincode.length !== 6 || isNaN(pincode)) {
+          pincodeError.innerText = "Enter a valid 6-digit pincode";
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `https://api.postalpincode.in/pincode/${pincode}`,
+          );
+          const data = await res.json();
+
+          if (data[0].Status !== "Success") {
+            pincodeError.innerText = "Invalid pincode";
+            return;
+          }
+
+          const postOffice = data[0].PostOffice[0];
+
+          cityInput.value = postOffice.District;
+          stateInput.value = postOffice.State;
+
+          isPincodeValid = true;
+        } catch (err) {
+          pincodeError.innerText = "Error validating pincode";
+        }
+      });
+
+      function normalizePhone(phone) {
+        phone = phone.replace(/\D/g, "");
+
+        if (phone.startsWith("91") && phone.length === 12) {
+          phone = phone.slice(2);
+        }
+
+        if (phone.startsWith("0") && phone.length === 11) {
+          phone = phone.slice(1);
+        }
+
+        return phone;
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        message.innerText = "";
+        phoneError.innerText = "";
+        pincodeError.innerText = "";
+
+        let phone = normalizePhone(phoneInput.value);
+
+        // Phone length
+        if (phone.length !== 10) {
+          phoneError.innerText = "Phone must be exactly 10 digits";
+          return;
+        }
+
+        //Invalid pattern
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+          phoneError.innerText = "Enter a valid Indian phone number";
+          return;
+        }
+
+        // Save cleaned phone
+        phoneInput.value = phone;
+
+        // Pincode
+        if (!isPincodeValid) {
+          pincodeError.innerText = "Please enter a valid pincode";
+          return;
+        }
+
+        const data = Object.fromEntries(new FormData(form));
+
+        try {
+          const res = await fetch(`/profile/address/${addressId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+
+          message.innerText = result.message;
+
+          if (res.ok) {
+            message.className = "text-success";
+
+            setTimeout(() => {
+              window.location.href = "/profile/address";
+            }, 1200);
+          } else {
+            message.className = "text-danger";
+          }
+        } catch (err) {
+          message.innerText = "Something went wrong";
+          message.className = "text-danger";
+        }
+      });
+    </script>
+  </body>
+</html>

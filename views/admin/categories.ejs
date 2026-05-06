@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Category Management</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-light">
+    <%- include("../partials/sidebar") %>
+    <div class="col-10 px-5 mt-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Category Management</h2>
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#addModal"
+        >
+          + Add Category
+        </button>
+      </div>
+
+      <!-- ALERT -->
+      <div id="alertBox"></div>
+
+      <!-- TABLE -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Category Management</h2>
+            <div class="d-flex gap-2">
+              <div class="input-group" style="width: 400px">
+                <input
+                  type="text"
+                  id="searchInput"
+                  class="form-control"
+                  placeholder="Search category..."
+                  onkeyup="if (event.key === 'Enter') performSearch();"
+                />
+                <button class="btn btn-primary" onclick="performSearch()">
+                  Search
+                </button>
+
+                <button
+                  class="btn btn-outline-secondary"
+                  onclick="clearSearch()"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+          <table class="table table-bordered table-hover text-center">
+            <thead class="table-dark">
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="categoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5>Add Category</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input
+              type="text"
+              id="addName"
+              class="form-control mb-2"
+              placeholder="Category Name"
+            />
+            <input
+              type="text"
+              id="addDesc"
+              class="form-control"
+              placeholder="Description"
+            />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="addCategory()">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="editModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5>Edit Category</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="editId" />
+            <input type="text" id="editName" class="form-control mb-2" />
+            <input type="text" id="editDesc" class="form-control" />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="updateCategory()">
+              Update
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "/admin/category";
+
+      function showAlert(message, type = "success") {
+        const alertBox = document.getElementById("alertBox");
+        alertBox.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show">
+      ${message}
+      <button class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+      }
+
+      let currentSearch = "";
+      const limit = 10;
+
+      async function loadCategories(page = 1) {
+        const url = `${API}?search=${encodeURIComponent(currentSearch)}&page=${page}&limit=${limit}`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+
+          const table = document.getElementById("categoryTable");
+          table.innerHTML = "";
+
+          if (data.categories.length === 0) {
+            table.innerHTML = `<tr><td colspan="4" class="text-center">No categories found</td></tr>`;
+            document.getElementById("paginationControls").innerHTML = "";
+            return;
+          }
+
+          data.categories.forEach((cat) => {
+            table.innerHTML += `
+        <tr>
+          <td>${cat.name}</td>
+          <td>${cat.description}</td>
+          <td>
+            ${
+              cat.isDeleted
+                ? '<span class="badge bg-danger">Unlisted</span>'
+                : '<span class="badge bg-success">Listed</span>'
+            }
+          </td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="openEdit('${cat._id}','${cat.name}','${cat.description}')">Edit</button>
+            <button class="btn btn-sm ${cat.isDeleted ? "btn-success" : "btn-danger"}" onclick="toggleCategory('${cat._id}')">
+              ${cat.isDeleted ? "List" : "Unlist"}
+            </button>
+          </td>
+        </tr>`;
+          });
+
+          renderPagination(data.totalPages, data.currentPage);
+        } catch (err) {
+          console.error("Load Error:", err);
+        }
+      }
+
+      function renderPagination(totalPages, activePage) {
+        const container = document.getElementById("paginationControls");
+        container.innerHTML = "";
+
+        // Previous
+        container.innerHTML += `
+    <li class="page-item ${activePage === 1 ? "disabled" : ""}">
+      <a class="page-link" href="javascript:void(0)" onclick="loadCategories(${activePage - 1})">&laquo;</a>
+    </li>`;
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          container.innerHTML += `
+      <li class="page-item ${i === activePage ? "active" : ""}">
+        <a class="page-link" href="javascript:void(0)" onclick="loadCategories(${i})">${i}</a>
+      </li>`;
+        }
+
+        // Next
+        container.innerHTML += `
+    <li class="page-item ${activePage === totalPages ? "disabled" : ""}">
+      <a class="page-link" href="javascript:void(0)" onclick="loadCategories(${activePage + 1})">&raquo;</a>
+    </li>`;
+      }
+      function clearSearch() {
+        document.getElementById("searchInput").value = "";
+
+        currentSearch = "";
+
+        loadCategories(1);
+      }
+      function performSearch() {
+        currentSearch = document.getElementById("searchInput").value.trim();
+        loadCategories(1);
+      }
+
+      loadCategories();
+
+      async function addCategory() {
+        const name = document.getElementById("addName").value.trim();
+        const description = document.getElementById("addDesc").value.trim();
+
+        if (!name) {
+          return showAlert("Name is required", "danger");
+        }
+
+        const res = await fetch(`${API}/add`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({name, description}),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          return showAlert(data.message, "danger");
+        }
+
+        showAlert("Category added successfully");
+
+        document.getElementById("addName").value = "";
+        document.getElementById("addDesc").value = "";
+
+        bootstrap.Modal.getInstance(document.getElementById("addModal")).hide();
+
+        loadCategories();
+      }
+
+      function openEdit(id, name, desc) {
+        document.getElementById("editId").value = id;
+        document.getElementById("editName").value = name;
+        document.getElementById("editDesc").value = desc;
+
+        new bootstrap.Modal(document.getElementById("editModal")).show();
+      }
+
+      async function updateCategory() {
+        const id = document.getElementById("editId").value;
+        const name = document.getElementById("editName").value.trim();
+        const description = document.getElementById("editDesc").value.trim();
+
+        const res = await fetch(`${API}/edit/${id}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({name, description}),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          return showAlert(data.message, "danger");
+        }
+
+        showAlert("Category updated");
+
+        bootstrap.Modal.getInstance(
+          document.getElementById("editModal"),
+        ).hide();
+
+        loadCategories();
+      }
+
+      async function toggleCategory(id) {
+        await fetch(`${API}/toggle/${id}`, {
+          method: "PATCH",
+        });
+
+        loadCategories();
+      }
+
+      loadCategories();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

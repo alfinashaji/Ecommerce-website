@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Brand Management</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-light">
+    <%- include("../partials/sidebar") %>
+    <div class="col-10 px-5 mt-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Brand Management</h2>
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#addModal"
+        >
+          + Add Brand
+        </button>
+      </div>
+
+      <div id="alertBox"></div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <table
+            class="table table-bordered table-hover text-center align-middle"
+          >
+            <thead class="table-dark">
+              <tr>
+                <th>Logo</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="brandTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5>Add Brand</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input
+              type="text"
+              id="addName"
+              class="form-control mb-2"
+              placeholder="Brand Name"
+            />
+            <input
+              type="text"
+              id="addDesc"
+              class="form-control mb-2"
+              placeholder="Description"
+            />
+            <input type="file" id="addLogo" class="form-control" />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-success" onclick="addBrand()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="editModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5>Edit Brand</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="editId" />
+            <input type="text" id="editName" class="form-control mb-2" />
+            <input type="text" id="editDesc" class="form-control mb-2" />
+            <input type="file" id="editLogo" class="form-control" />
+
+            <img id="previewLogo" width="80" class="mt-2" />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="updateBrand()">
+              Update
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "/admin/brand";
+
+      function showAlert(message, type = "success") {
+        document.getElementById("alertBox").innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show">
+      ${message}
+      <button class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+      }
+
+      async function loadBrands() {
+        const res = await fetch(API);
+        const data = await res.json();
+
+        const table = document.getElementById("brandTable");
+        table.innerHTML = "";
+
+        data.forEach((b) => {
+          table.innerHTML += `
+      <tr>
+        <td>
+          ${b.logo ? `<img src="${b.logo}" width="50" height="50" style="object-fit:contain;">` : "-"}
+        </td>
+
+        <td>${b.name}</td>
+        <td>${b.description}</td>
+
+        <td>
+          ${
+            b.isListed
+              ? '<span class="badge bg-success">Listed</span>'
+              : '<span class="badge bg-danger">Unlisted</span>'
+          }
+        </td>
+
+        <td>
+          <button class="btn btn-sm btn-warning"
+            onclick="openEdit(this)"
+            data-id="${b._id}"
+            data-name="${b.name}"
+            data-desc="${b.description}"
+            data-logo="${b.logo}">
+            Edit
+          </button>
+
+          <button class="btn btn-sm ${b.isListed ? "btn-danger" : "btn-success"}"
+            onclick="toggleBrand('${b._id}')">
+            ${b.isListed ? "Unlist" : "List"}
+          </button>
+        </td>
+      </tr>
+    `;
+        });
+      }
+
+      async function addBrand() {
+        const formData = new FormData();
+
+        formData.append("name", document.getElementById("addName").value);
+        formData.append(
+          "description",
+          document.getElementById("addDesc").value,
+        );
+
+        const file = document.getElementById("addLogo").files[0];
+        if (file) formData.append("logo", file);
+
+        const res = await fetch(`${API}/add`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) return showAlert(data.message, "danger");
+
+        showAlert("Brand added");
+        loadBrands();
+      }
+
+      function openEdit(btn) {
+        document.getElementById("editId").value = btn.dataset.id;
+        document.getElementById("editName").value = btn.dataset.name;
+        document.getElementById("editDesc").value = btn.dataset.desc;
+
+        document.getElementById("previewLogo").src = btn.dataset.logo || "";
+
+        document.getElementById("editLogo").value = "";
+
+        new bootstrap.Modal(document.getElementById("editModal")).show();
+      }
+
+      async function updateBrand() {
+        const id = document.getElementById("editId").value;
+
+        const formData = new FormData();
+        formData.append("name", document.getElementById("editName").value);
+        formData.append(
+          "description",
+          document.getElementById("editDesc").value,
+        );
+
+        const file = document.getElementById("editLogo").files[0];
+        if (file) formData.append("logo", file);
+
+        const res = await fetch(`${API}/edit/${id}`, {
+          method: "PUT",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) return showAlert(data.message, "danger");
+
+        showAlert("Brand updated");
+        loadBrands();
+      }
+
+      async function toggleBrand(id) {
+        await fetch(`${API}/toggle/${id}`, {
+          method: "PATCH",
+        });
+
+        loadBrands();
+      }
+
+      loadBrands();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

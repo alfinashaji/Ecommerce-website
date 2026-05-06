@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Category Offers</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+  <%- include("../partials/sidebar") %>
+<div class="col-10 px-5 mt-5">
+
+  <h3>Category Offer Management</h3>
+
+  <table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Type</th>
+        <th>Value</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% categories.forEach(cat => { %>
+        <tr>
+          <td><%= cat.name %></td>
+
+          <td><%= cat.discount?.type || "-" %></td>
+
+          <td><%= cat.discount?.value || "-" %></td>
+
+          <td>
+            <% if (cat.discount?.isActive) { %>
+              <span class="badge bg-success">Active</span>
+            <% } else { %>
+              <span class="badge bg-secondary">Inactive</span>
+            <% } %>
+          </td>
+
+          <td>
+
+            
+            <button class="btn btn-primary btn-sm"
+              onclick="openEdit('<%= cat._id %>')">
+              Edit
+            </button>
+
+          
+            <button class="btn btn-sm btn-warning"
+  onclick="toggleOffer('<%= cat._id %>')">
+
+  <% if (cat.discount && cat.discount.isActive === true) { %>
+    Unlist
+  <% } else { %>
+    List
+  <% } %>
+
+</button>
+
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+</div>
+
+
+<div class="modal fade" id="offerModal">
+  <div class="modal-dialog">
+    <div class="modal-content p-3">
+
+      <input type="hidden" id="categoryId">
+
+      <select id="type" class="form-control">
+        <option value="percentage">Percentage</option>
+        <option value="flat">Flat</option>
+      </select>
+
+      <input id="value" class="form-control mt-2" placeholder="Value">
+
+      <input id="expiryDate" type="date" class="form-control mt-2">
+
+      <button class="btn btn-success mt-3" onclick="saveOffer()">
+        Save
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<script>
+
+async function openEdit(id){
+
+  const res = await fetch(`/admin/category-offer/edit/${id}`);
+  const data = await res.json();
+
+  categoryId.value = id;
+  type.value = data.type || "";
+  value.value = data.value || "";
+  expiryDate.value = data.expiryDate
+    ? data.expiryDate.split("T")[0]
+    : "";
+
+  new bootstrap.Modal(document.getElementById("offerModal")).show();
+}
+
+async function saveOffer(){
+
+  await fetch("/admin/category-offer/save", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      categoryId: categoryId.value,
+      type: type.value,
+      value: value.value,
+      expiryDate: expiryDate.value,
+      isActive: true
+    })
+  });
+
+  location.reload();
+}
+
+async function toggleOffer(id){
+
+  await fetch("/admin/category-offer/toggle", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({categoryId:id})
+  });
+
+  location.reload();
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

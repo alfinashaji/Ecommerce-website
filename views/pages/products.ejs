@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Products</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      :root {
+        --filter-title-color: #212529;
+        --accent-color: #000;
+      }
+
+      .filter-box {
+        background: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+      }
+
+      .filter-section-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        color: var(--filter-title-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .filter-option {
+        display: block;
+        position: relative;
+        padding-left: 25px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #495057;
+        transition: 0.2s;
+      }
+
+      .filter-option input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkmark {
+        position: absolute;
+        top: 2px;
+        left: 0;
+        height: 16px;
+        width: 16px;
+        background-color: #eee;
+        border-radius: 50%;
+      }
+
+      .filter-option:hover input ~ .checkmark {
+        background-color: #ccc;
+      }
+
+      .filter-option input:checked ~ .checkmark {
+        background-color: var(--accent-color);
+      }
+
+      .size-btn {
+        border: 1px solid #ccc;
+        width: 40px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 3px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+
+      .size-btn.active {
+        background: black;
+        color: white;
+        border-color: black;
+      }
+
+      .price-input-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .price-input-group input {
+        border-radius: 0;
+        font-size: 0.85rem;
+      }
+
+      .product-card {
+        border-radius: 0;
+        transition: 0.2s;
+        background: #fff;
+        height: 100%;
+      }
+
+      .product-card:hover {
+        transform: translateY(-3px);
+      }
+
+      .product-img-container {
+        position: relative;
+        width: 100%;
+        padding-top: 125%;
+        overflow: hidden;
+      }
+
+      .product-img-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .wishlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: 0.3s;
+      }
+
+      .discount-badge {
+        background-color: #f8d7da;
+        color: #dc3545;
+        padding: 2px 8px;
+        font-weight: bold;
+        font-size: 0.8rem;
+      }
+
+      .old-price {
+        text-decoration: line-through;
+        color: #adb5bd;
+        font-size: 0.9rem;
+      }
+
+      .cart-icon-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        transition: 0.2s;
+      }
+
+      .cart-icon-btn:hover {
+        transform: scale(1.1);
+      }
+
+      .remove-filter-link {
+        font-size: 0.7rem;
+        color: #dc3545;
+        text-decoration: none;
+        font-weight: normal;
+        text-transform: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body class="bg-light">
+    <%- include("../partials/navbar") %>
+    <div class="container-fluid py-5 px-5">
+      <div class="row px-5">
+        <div class="col-md-3">
+          <div class="filter-box shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="m-0 fw-bold">Filters</h5>
+              <span class="remove-filter-link" onclick="clearFilters()"
+                >Remove All</span
+              >
+            </div>
+            <hr />
+
+            <div class="filter-section-title">Category</div>
+            <div id="categoryFilter" class="mb-4"></div>
+
+            <div class="filter-section-title">Size</div>
+            <div id="sizeFilter" class="mb-4">
+              <span class="size-btn" onclick="selectSize(this, 'xs')">XS</span>
+              <span class="size-btn" onclick="selectSize(this, 's')">S</span>
+              <span class="size-btn" onclick="selectSize(this, 'm')">M</span>
+              <span class="size-btn" onclick="selectSize(this, 'l')">L</span>
+              <span class="size-btn" onclick="selectSize(this, 'xl')">XL</span>
+            </div>
+
+            <div class="filter-section-title">Sort By</div>
+            <div class="mb-4">
+              <label class="filter-option"
+                >Price Low to High
+                <input type="radio" name="sort" value="priceLow" />
+                <span class="checkmark"></span>
+              </label>
+              <label class="filter-option"
+                >Price High to Low
+                <input type="radio" name="sort" value="priceHigh" />
+                <span class="checkmark"></span>
+              </label>
+              <label class="filter-option"
+                >A - Z
+                <input type="radio" name="sort" value="a-z" />
+                <span class="checkmark"></span>
+              </label>
+              <label class="filter-option"
+                >Z - A
+                <input type="radio" name="sort" value="z-a" />
+                <span class="checkmark"></span>
+              </label>
+            </div>
+
+            <div class="filter-section-title">Price Range</div>
+            <div class="price-input-group mb-4">
+              <input id="minPrice" class="form-control" placeholder="Min" />
+              <span class="text-muted">-</span>
+              <input id="maxPrice" class="form-control" placeholder="Max" />
+            </div>
+
+            <div class="filter-section-title">Brand</div>
+            <div id="brandFilter" class="mb-4"></div>
+
+            <button
+              class="btn btn-dark w-100 py-2 fw-bold"
+              onclick="applyFilter()"
+            >
+              APPLY FILTERS
+            </button>
+          </div>
+        </div>
+
+        <div class="col-md-9">
+          <div class="row" id="productContainer"></div>
+
+          <div id="pagination" class="d-flex justify-content-center mt-4"></div>
+        </div>
+      </div>
+    </div>
+    <%- include("../partials/footer") %>
+    <script>
+      const API = "/products/api";
+      let selectedCategory = "";
+      let selectedSize = "";
+      let selectedSort = "";
+      let priceMin = "";
+      let priceMax = "";
+      let selectedBrand = "";
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialSearch = urlParams.get("search") || "";
+
+      async function loadProducts(page = 1) {
+        const search = (
+          document.getElementById("searchInput")?.value || initialSearch
+        ).trim();
+        console.log("Search:", search);
+        const params = new URLSearchParams();
+        params.append("page", page);
+        if (search) params.append("search", search);
+        if (selectedSort) params.append("sort", selectedSort);
+        if (selectedCategory) params.append("category", selectedCategory);
+        if (selectedSize) params.append("size", selectedSize);
+        if (selectedBrand) params.append("brand", selectedBrand);
+        if (priceMin) params.append("priceMin", priceMin);
+        if (priceMax) params.append("priceMax", priceMax);
+
+        const res = await fetch(`${API}?${params.toString()}`);
+        const data = await res.json();
+        const container = document.getElementById("productContainer");
+        container.innerHTML = "";
+
+        if (!data.products || data.products.length === 0) {
+          document.getElementById("pagination").innerHTML = "";
+          container.innerHTML =
+            "<div class='col-12 text-center mt-5'><i class='fa-solid fa-box-open fa-3x text-muted mb-3'></i><h5>No products found matching your criteria</h5></div>";
+          return;
+        }
+
+        data.products.forEach((p) => {
+          const category = p.category || {};
+          const basePrice = p.variants?.length
+            ? Math.min(...p.variants.map((v) => v.price || 0))
+            : 0;
+          let discountAmount = 0;
+          let discountText = "";
+          const discount = category?.discount;
+
+          if (
+            discount &&
+            discount.isActive &&
+            discount.expiryDate &&
+            new Date(discount.expiryDate) > new Date()
+          ) {
+            if (discount.type === "percentage") {
+              discountAmount = (basePrice * discount.value) / 100;
+              discountText = `-${discount.value}%`;
+            } else {
+              discountAmount = discount.value;
+              discountText = `-₹${discount.value}`;
+            }
+          }
+
+          const finalPrice = Math.max(basePrice - discountAmount, 0);
+          const img = p.variants?.[0]?.images?.[0] || "";
+
+          container.innerHTML += `
+            <div class="col-md-6 col-lg-4 mb-4">
+              <a href="/products/${p._id}" class="text-decoration-none text-dark">
+                <div class="card product-card border-0 shadow-sm">
+                  <div class="product-img-container">
+                    <img src="${img}" alt="${p.name}">
+                    <button class="wishlist-btn" onclick="event.preventDefault(); toggleWishlist(this, '${p._id}')">
+                      <i class="fa-regular fa-heart"></i>
+                    </button>
+                  </div>
+                  <div class="p-3">
+                    <h5 class="fw-bold mb-1" style="font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</h5>
+                    <p class="text-muted mb-2" style="font-size: 0.8rem; overflow: hidden;">
+                      ${p.description || "No description available."}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <div class="fw-bold text-dark" style="font-size: 1.1rem;">₹${finalPrice}</div>
+                        ${discountAmount > 0 ? `<div class="old-price">₹${basePrice}</div>` : ""}
+                      </div>
+                      ${discountAmount > 0 ? `<div class="discount-badge">${discountText}</div>` : ""}
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                      <button class="cart-icon-btn" onclick="event.preventDefault(); addToCart('${p._id}')">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+          `;
+        });
+
+        renderPagination(data.totalPages, data.currentPage);
+      }
+
+      function renderPagination(total, current) {
+        let html = "";
+        for (let i = 1; i <= total; i++) {
+          html += `<button class="btn btn-sm mx-1 ${i === current ? "btn-dark" : "btn-outline-dark"}" onclick="loadProducts(${i})">${i}</button> `;
+        }
+        document.getElementById("pagination").innerHTML = html;
+      }
+
+      async function loadCategories() {
+        const res = await fetch("/admin/category");
+        const data = await res.json();
+        document.getElementById("categoryFilter").innerHTML = data
+          .map(
+            (c) =>
+              `<label class="filter-option">${c.name}
+                <input type="radio" name="category" onclick="selectCategory('${c._id}')">
+                <span class="checkmark"></span>
+              </label>`,
+          )
+          .join("");
+      }
+
+      function selectCategory(id) {
+        selectedCategory = id;
+      }
+
+      function selectSize(el, size) {
+        document
+          .querySelectorAll(".size-btn")
+          .forEach((b) => b.classList.remove("active"));
+        el.classList.add("active");
+        selectedSize = size;
+      }
+
+      async function loadBrands() {
+        const res = await fetch("/admin/brand");
+        const data = await res.json();
+        document.getElementById("brandFilter").innerHTML = data
+          .map(
+            (b) =>
+              `<label class="filter-option">${b.name}
+                <input type="radio" name="brand" onclick="selectBrand('${b._id}')">
+                <span class="checkmark"></span>
+              </label>`,
+          )
+          .join("");
+      }
+
+      function selectBrand(id) {
+        selectedBrand = id;
+      }
+
+      function applyFilter() {
+        selectedSort =
+          document.querySelector('input[name="sort"]:checked')?.value || "";
+        priceMin = document.getElementById("minPrice").value.trim();
+        priceMax = document.getElementById("maxPrice").value.trim();
+        loadProducts(1);
+      }
+
+      function clearFilters() {
+        selectedCategory = "";
+        selectedSize = "";
+        selectedSort = "";
+        selectedBrand = "";
+        priceMin = "";
+        priceMax = "";
+        document.getElementById("minPrice").value = "";
+        document.getElementById("maxPrice").value = "";
+        document
+          .querySelectorAll('input[type="radio"]')
+          .forEach((i) => (i.checked = false));
+        document
+          .querySelectorAll(".size-btn")
+          .forEach((b) => b.classList.remove("active"));
+        loadProducts(1);
+      }
+
+      loadCategories();
+      loadBrands();
+
+      const searchBox = document.getElementById("searchInput");
+      if (searchBox) {
+        searchBox.value = initialSearch;
+      }
+
+      loadProducts();
+    </script>
+  </body>
+</html>
