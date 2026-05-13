@@ -1,3 +1,5 @@
+const Category = require("../models/categoryModel");
+const Brand = require("../models/brandModel");
 const Product = require("../models/productModel");
 const {getCategoryDiscountPrice} = require("../utils/discountHelper");
 
