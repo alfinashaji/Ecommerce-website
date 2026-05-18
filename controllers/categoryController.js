@@ -5,7 +5,9 @@ const Category = require("../models/categoryModel");
 exports.addCategory = async (req, res) => {
   try {
     const {name, description} = req.body;
-    const existing = await Category.findOne({name});
+    const existing = await Category.findOne({
+      name: {$regex: new RegExp(`^${name}$`, "i")},
+    });
 
     if (existing) {
       return res.status(401).json({message: "Category already exists"});
@@ -59,8 +61,17 @@ exports.editCategory = async (req, res) => {
     const {id} = req.params;
     const {name, description} = req.body;
 
-    const category = await Category.findById(id);
+    const existing = await Category.findOne({
+      _id: {$ne: id},
+      name: {$regex: new RegExp(`^${name}$`, "i")},
+    });
 
+    if (existing) {
+      return res.status(400).json({
+        message: "Category already exists",
+      });
+    }
+    const category = await Category.findById(id);
     if (!category || category.isDeleted) {
       return res.status(404).json({message: "Category not found"});
     }

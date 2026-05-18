@@ -130,7 +130,7 @@ exports.getProductDetails = async (req, res) => {
   try {
     const {id} = req.params;
 
-    const product = await Product.findById(id)
+    let product = await Product.findById(id)
       .populate("category", "name discount")
       .populate("brand", "name logo");
 
@@ -138,13 +138,17 @@ exports.getProductDetails = async (req, res) => {
       return res.redirect("/products");
     }
 
-    product.variants = product.variants.map((v) => {
+    const updatedVariants = product.variants.map((v) => {
       const finalPrice = getCategoryDiscountPrice(v.price, product.category);
+
       return {
         ...v.toObject(),
         finalPrice,
       };
     });
+
+    product = product.toObject();
+    product.variants = updatedVariants;
 
     const currentSizes = product.variants.map((v) => v.size);
     const currentColors = product.variants.map((v) => v.color);
@@ -166,6 +170,7 @@ exports.getProductDetails = async (req, res) => {
     const updatedRelatedProducts = relatedProducts.map((p) => {
       const updatedVariants = p.variants.map((v) => {
         const finalPrice = getCategoryDiscountPrice(v.price, p.category);
+
         return {
           ...v.toObject(),
           finalPrice,

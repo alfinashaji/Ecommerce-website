@@ -407,7 +407,41 @@
           thumbBox.innerHTML += `<img src="${img}" class="thumb" onclick="changeImage('${img}')">`;
         });
 
-        document.getElementById("price").innerText = "₹" + v.price.toLocaleString();
+        const priceBox = document.getElementById("price");
+
+if (v.finalPrice < v.price) {
+  priceBox.innerHTML = `
+    <span style="font-size:22px;font-weight:bold;">
+      ₹${v.finalPrice.toLocaleString()}
+    </span>
+
+    <span style="
+      text-decoration: line-through;
+      color: #888;
+      margin-left: 10px;
+      font-size: 15px;
+    ">
+      ₹${v.price.toLocaleString()}
+    </span>
+
+    <span style="
+      background:#f8d7da;
+      color:#dc3545;
+      padding:2px 8px;
+      margin-left:10px;
+      font-size:12px;
+      font-weight:bold;
+    ">
+      OFFER
+    </span>
+  `;
+} else {
+  priceBox.innerHTML = `
+    <span style="font-size:22px;font-weight:bold;">
+      ₹${v.price.toLocaleString()}
+    </span>
+  `;
+}
 
         const cartBtn = document.getElementById("addToCartBtn");
         const buyBtn = document.getElementById("buyNowBtn");
