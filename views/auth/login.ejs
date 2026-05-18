@@ -34,8 +34,15 @@
         class="alert alert-danger text-center"
         style="display: none"
       ></div>
+
+<% if (success) { %>
+  <div class="alert alert-success">
+    <%= success %>
+  </div>
+<% } %>
+
 <% if (error) { %>
-  <div class="alert alert-danger text-center">
+  <div class="alert alert-danger">
     <%= error %>
   </div>
 <% } %>

@@ -166,6 +166,7 @@ const verifyOtp = async (req, res) => {
     user.otpExpiry = null;
 
     await user.save();
+    req.session.success = "Signup successful. Please login";
     delete req.session.userData;
     return res.redirect("/api/auth/login");
   } catch (error) {
@@ -209,7 +210,9 @@ const forgotPassword = async (req, res) => {
       text: `Your OTP is ${otp}`,
     });
 
-    return res.redirect(`/api/auth/verify-forgot-otp?email=${email}`);
+    req.session.forgotEmail = email;
+
+    return res.redirect("/api/auth/verify-forgot-otp");
   } catch (error) {
     return res.status(500).json({message: error.message});
   }
@@ -234,7 +237,7 @@ const resendForgotOtp = async (req, res) => {
 
     if (user.lastOtpSentAt && Date.now() - user.lastOtpSentAt < 30 * 1000) {
       req.session.error = "Please wait before resending OTP";
-      return res.redirect(`/api/auth/verify-forgot-otp?email=${email}`);
+      return res.redirect("/api/auth/verify-forgot-otp");
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -262,7 +265,7 @@ const resendForgotOtp = async (req, res) => {
 
     req.session.success = "OTP resent successfully";
 
-    return res.redirect(`/api/auth/verify-forgot-otp?email=${email}`);
+    return res.redirect("/api/auth/verify-forgot-otp");
   } catch (error) {
     return res.status(500).json({message: error.message});
   }
@@ -276,22 +279,32 @@ const verifyForgotOtp = async (req, res) => {
     const user = await User.findOne({email});
 
     if (!user) {
-      return res.status(404).json({message: "User not found"});
+      req.session.error = "User not found";
+      return res.redirect("/api/auth/forgot-password");
     }
 
+    // invalid otp
     if (String(user.otp) !== String(otp)) {
-      req.session.error = "Invalid Otp";
+      req.session.error = "Invalid OTP";
+
       return res.redirect("/api/auth/verify-forgot-otp?email=" + email);
     }
 
+    // expired otp
     if (user.otpExpiry < Date.now()) {
       req.session.error = "OTP expired";
+
       return res.redirect("/api/auth/verify-forgot-otp?email=" + email);
     }
 
-    return res.redirect(`/api/auth/reset-password?email=${email}`);
+    // verified successfully
+    req.session.resetEmail = email;
+
+    return res.redirect("/api/auth/reset-password");
   } catch (error) {
-    return res.status(500).json({message: error.message});
+    return res.status(500).json({
+      message: error.message,
+    });
   }
 };
 
@@ -345,30 +358,44 @@ const login = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-    const {email, newPassword, confirmPassword} = req.body;
+    const {newPassword, confirmPassword} = req.body;
 
-    if (!email || !newPassword || !confirmPassword) {
-      return res.status(400).json({message: "All fields required"});
+    const email = req.session.resetEmail;
+
+    if (!email) {
+      req.session.error = "Unauthorized access";
+      return res.redirect("/api/auth/forgot-password");
+    }
+
+    if (!newPassword || !confirmPassword) {
+      req.session.error = "All fields required";
+      return res.redirect("/api/auth/reset-password");
     }
 
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({message: "Passwords do not match"});
+      req.session.error = "Passwords do not match";
+      return res.redirect("/api/auth/reset-password");
     }
 
     const user = await User.findOne({email});
 
     if (!user) {
-      return res.status(404).json({message: "User not found"});
+      req.session.error = "User not found";
+      return res.redirect("/api/auth/forgot-password");
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
     user.password = hashed;
-
     user.otp = null;
     user.otpExpiry = null;
 
     await user.save();
+
+    delete req.session.resetEmail;
+    delete req.session.forgotEmail;
+
+    req.session.success = "Password reset successful";
 
     return res.redirect("/api/auth/login");
   } catch (error) {
@@ -378,7 +405,6 @@ const resetPassword = async (req, res) => {
     });
   }
 };
-
 function handleError(req, res, isAjax, message) {
   if (isAjax) {
     return res.status(400).json({message});

@@ -14,7 +14,6 @@ const {
   getVerifyOtpPage,
 } = require("../controllers/authController");
 
-// ================= POST ROUTES =================
 router.post("/signup", signup);
 router.post("/resend-otp", resendOtp);
 router.post("/verify-otp", verifyOtp);
@@ -24,9 +23,7 @@ router.post("/resend-forgot-otp", resendForgotOtp);
 router.post("/verify-forgot-otp", verifyForgotOtp);
 router.post("/reset-password", resetPassword);
 
-// ================= GET ROUTES =================
-
-// ✅ SIGNUP PAGE
+// SIGNUP PAGE
 router.get("/signup", (req, res) => {
   const error = req.session.error;
   req.session.error = null;
@@ -34,10 +31,10 @@ router.get("/signup", (req, res) => {
   res.render("auth/signup", {error: error || null});
 });
 
-// ✅ VERIFY OTP PAGE
+//VERIFY OTP PAGE
 router.get("/verify-otp", getVerifyOtpPage);
 
-// ✅ FORGOT PASSWORD PAGE
+// FORGOT PASSWORD PAGE
 router.get("/forgot-password", (req, res) => {
   const error = req.session.error;
   req.session.error = null;
@@ -45,37 +42,56 @@ router.get("/forgot-password", (req, res) => {
   res.render("auth/forgot-password", {error: error || null});
 });
 
-// ✅ VERIFY FORGOT OTP PAGE
+// VERIFY FORGOT OTP PAGE
 router.get("/verify-forgot-otp", async (req, res) => {
   try {
+    const email = req.session.forgotEmail;
+
+    if (!email) {
+      req.session.error = "Session expired";
+
+      return res.redirect("/api/auth/forgot-password");
+    }
+
     const error = req.session.error;
     const success = req.session.success;
 
     req.session.error = null;
     req.session.success = null;
 
-    const user = await User.findOne({email: req.query.email});
+    const user = await User.findOne({email});
 
     res.render("auth/forgot-otp", {
-      email: req.query.email,
+      email,
       error: error || null,
       success: success || null,
       otpExpiry: user?.otpExpiry ? Number(user.otpExpiry) : 0,
     });
   } catch (err) {
     console.log(err);
+
     res.redirect("/api/auth/forgot-password");
   }
 });
 
-// ✅ RESET PASSWORD PAGE
+//RESET PASSWORD PAGE
 router.get("/reset-password", (req, res) => {
+  if (!req.session.resetEmail) {
+    req.session.error = "Unauthorized access";
+
+    return res.redirect("/api/auth/forgot-password");
+  }
+
   res.render("auth/reset-password", {
-    email: req.query.email || "",
+    error: req.session.error,
+    success: req.session.success,
   });
+
+  req.session.error = null;
+  req.session.success = null;
 });
 
-// ✅ LOGIN PAGE
+//LOGIN PAGE
 router.get("/login", (req, res) => {
   // already logged in
   if (req.session.userId) {
@@ -83,14 +99,18 @@ router.get("/login", (req, res) => {
   }
 
   const error = req.session.error;
+  const success = req.session.success;
+
   req.session.error = null;
+  req.session.success = null;
 
   res.render("auth/login", {
     error: error || null,
+    success: success || null,
   });
 });
 
-// ✅ LOGOUT
+// LOGOUT
 router.post("/logout", (req, res) => {
   req.session.destroy(() => {
     res.set("Cache-Control", "no-store"); // prevent back button access
