@@ -299,30 +299,27 @@
         }
 
         data.products.forEach((p) => {
-          const category = p.category || {};
           const basePrice = p.variants?.length
             ? Math.min(...p.variants.map((v) => v.price || 0))
             : 0;
-          let discountAmount = 0;
-          let discountText = "";
-          const discount = category?.discount;
 
-          if (
-            discount &&
-            discount.isActive &&
-            discount.expiryDate &&
-            new Date(discount.expiryDate) > new Date()
-          ) {
+          const finalPrice = p.variants?.length
+            ? Math.min(...p.variants.map((v) => v.finalPrice || v.price))
+            : 0;
+
+          const hasOffer = finalPrice < basePrice;
+
+          const discount = p.category?.discount;
+
+          let discountText = "";
+
+          if (hasOffer && discount) {
             if (discount.type === "percentage") {
-              discountAmount = (basePrice * discount.value) / 100;
               discountText = `-${discount.value}%`;
             } else {
-              discountAmount = discount.value;
               discountText = `-₹${discount.value}`;
             }
           }
-
-          const finalPrice = Math.max(basePrice - discountAmount, 0);
           const img = p.variants?.[0]?.images?.[0] || "";
 
           container.innerHTML += `
@@ -343,9 +340,9 @@
                     <div class="d-flex justify-content-between align-items-center">
                       <div>
                         <div class="fw-bold text-dark" style="font-size: 1.1rem;">₹${finalPrice}</div>
-                        ${discountAmount > 0 ? `<div class="old-price">₹${basePrice}</div>` : ""}
+                        ${hasOffer ? `<div class="old-price">₹${basePrice}</div>` : ""}
                       </div>
-                      ${discountAmount > 0 ? `<div class="discount-badge">${discountText}</div>` : ""}
+                      ${hasOffer ? `<div class="discount-badge">${discountText}</div>` : ""}
                     </div>
                     <div class="d-flex justify-content-end mt-2">
                       <button class="cart-icon-btn" onclick="event.preventDefault(); addToCart('${p._id}')">

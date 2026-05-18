@@ -33,13 +33,17 @@ exports.saveCategoryOffer = async (req, res) => {
     }
 
     category.discount.type = type;
-    category.discount.value = value;
-    category.discount.expiryDate = expiryDate;
-    category.discount.isActive = isActive;
+    category.discount.value = Number(value);
+    category.discount.expiryDate = new Date(expiryDate);
+
+    // IMPORTANT
+    category.discount.isActive = isActive === true || isActive === "true";
 
     category.markModified("discount");
 
     await category.save();
+
+    console.log(category.discount);
 
     res.json({message: "Offer saved"});
   } catch (err) {
