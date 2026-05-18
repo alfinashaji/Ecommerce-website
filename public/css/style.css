@@ -64,11 +64,12 @@ body {
 /* Eye icon */
 .eye-icon {
   position: absolute;
-  right: 10px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #aaa;
+  z-index: 10;
+  color: #666;
 }
 
 /* Button */

@@ -33,7 +33,10 @@ function isValidEmail(email) {
 }
 
 function isValidPassword(password) {
-  return password.length >= 6;
+  const regex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  return regex.test(password);
 }
 
 // ===== SIGNUP VALIDATION =====
@@ -79,7 +82,10 @@ function setupSignupValidation() {
     }
 
     if (!isValidPassword(password)) {
-      setFieldError("passwordError", "Password must be at least 6 characters");
+      setFieldError(
+        "passwordError",
+        "Use 8+ chars with uppercase, lowercase, number & special character",
+      );
       isValid = false;
     }
 

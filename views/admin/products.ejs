@@ -591,7 +591,10 @@
       async function loadCategories() {
         const res = await fetch(CATEGORY_API);
         const data = await res.json();
-        category.innerHTML = data
+
+        const categorySelect = document.getElementById("category");
+
+        categorySelect.innerHTML = data.categories
           .map((c) => `<option value="${c._id}">${c.name}</option>`)
           .join("");
       }
@@ -599,29 +602,40 @@
       async function loadBrands() {
         const res = await fetch(BRAND_API);
         const data = await res.json();
-        brand.innerHTML = data
+
+        const brandSelect = document.getElementById("brand");
+
+        brandSelect.innerHTML = data
           .map((b) => `<option value="${b._id}">${b.name}</option>`)
           .join("");
       }
-
       async function loadEditCategories(selected) {
         const res = await fetch(CATEGORY_API);
         const data = await res.json();
-        editCategory.innerHTML = data
+
+        const editCategorySelect = document.getElementById("editCategory");
+
+        editCategorySelect.innerHTML = data.categories
           .map(
             (c) =>
-              `<option value="${c._id}" ${c._id === selected ? "selected" : ""}>${c.name}</option>`,
+              `<option value="${c._id}" ${
+                c._id === selected ? "selected" : ""
+              }>${c.name}</option>`,
           )
           .join("");
       }
-
       async function loadEditBrands(selected) {
         const res = await fetch(BRAND_API);
         const data = await res.json();
-        editBrand.innerHTML = data
+
+        const editBrandSelect = document.getElementById("editBrand");
+
+        editBrandSelect.innerHTML = data
           .map(
             (b) =>
-              `<option value="${b._id}" ${b._id === selected ? "selected" : ""}>${b.name}</option>`,
+              `<option value="${b._id}" ${
+                b._id === selected ? "selected" : ""
+              }>${b.name}</option>`,
           )
           .join("");
       }

@@ -11,6 +11,7 @@ const {
   verifyForgotOtp,
   resetPassword,
   resendForgotOtp,
+  getVerifyOtpPage,
 } = require("../controllers/authController");
 
 // ================= POST ROUTES =================
@@ -34,27 +35,7 @@ router.get("/signup", (req, res) => {
 });
 
 // ✅ VERIFY OTP PAGE
-router.get("/verify-otp", async (req, res) => {
-  try {
-    const error = req.session.error;
-    const success = req.session.success;
-
-    req.session.error = null;
-    req.session.success = null;
-
-    const user = await User.findOne({email: req.query.email});
-
-    res.render("auth/otp", {
-      email: req.query.email,
-      error: error || null,
-      success: success || null,
-      otpExpiry: user?.otpExpiry ? Number(user.otpExpiry) : 0,
-    });
-  } catch (err) {
-    console.log(err);
-    res.redirect("/api/auth/signup");
-  }
-});
+router.get("/verify-otp", getVerifyOtpPage);
 
 // ✅ FORGOT PASSWORD PAGE
 router.get("/forgot-password", (req, res) => {

@@ -46,7 +46,13 @@ const signup = async (req, res) => {
       text: `Your OTP is: ${otp}`,
     });
 
-    return res.redirect(`/api/auth/verify-otp?email=${email}`);
+    req.session.userData = {
+      fullName,
+      email,
+      password,
+    };
+
+    res.redirect("/api/auth/verify-otp");
   } catch (error) {
     return res.status(500).json({
       message: "Server Error",
@@ -54,7 +60,29 @@ const signup = async (req, res) => {
     });
   }
 };
+const getVerifyOtpPage = async (req, res) => {
+  try {
+    if (!req.session.userData) {
+      return res.redirect("/api/auth/signup");
+    }
 
+    const email = req.session.userData.email;
+
+    const user = await User.findOne({email});
+
+    res.render("auth/otp", {
+      email,
+      otpExpiry: user?.otpExpiry ? new Date(user.otpExpiry).getTime() : 0,
+      error: req.session.error,
+      success: req.session.success,
+    });
+
+    req.session.error = null;
+    req.session.success = null;
+  } catch (error) {
+    return res.redirect("/api/auth/signup");
+  }
+};
 // Resend OTP
 const resendOtp = async (req, res) => {
   try {
@@ -69,7 +97,7 @@ const resendOtp = async (req, res) => {
 
     if (user.lastOtpSentAt && Date.now() - user.lastOtpSentAt < 30 * 1000) {
       req.session.error = "Please wait before resending OTP";
-      return res.redirect("/api/auth/verify-otp?email=" + email);
+      return res.redirect("/api/auth/verify-otp");
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -100,14 +128,20 @@ const resendOtp = async (req, res) => {
     return res.redirect("/api/auth/verify-otp?email=" + email);
   } catch (error) {
     req.session.error = "Error resending OTP";
-    return res.redirect("/api/auth/verify-otp?email=" + req.body.email);
+    return res.redirect("/api/auth/verify-otp");
   }
 };
 
 // Verify OTP
 const verifyOtp = async (req, res) => {
   try {
-    const {email, otp} = req.body;
+    if (!req.session.userData) {
+      req.session.error = "Session expired";
+      return res.redirect("/api/auth/signup");
+    }
+    const {otp} = req.body;
+
+    const email = req.session.userData?.email;
 
     const user = await User.findOne({email});
 
@@ -118,12 +152,12 @@ const verifyOtp = async (req, res) => {
 
     if (String(user.otp) !== String(otp)) {
       req.session.error = "Invalid OTP";
-      return res.redirect("/api/auth/verify-otp?email=" + email);
+      return res.redirect("/api/auth/verify-otp");
     }
 
     if (user.otpExpiry < Date.now()) {
       req.session.error = "OTP expired";
-      return res.redirect("/api/auth/verify-otp?email=" + email);
+      return res.redirect("/api/auth/verify-otp");
     }
 
     user.isVerified = true;
@@ -132,7 +166,7 @@ const verifyOtp = async (req, res) => {
     user.otpExpiry = null;
 
     await user.save();
-
+    delete req.session.userData;
     return res.redirect("/api/auth/login");
   } catch (error) {
     return res.status(500).json({
@@ -363,4 +397,5 @@ module.exports = {
   verifyForgotOtp,
   resetPassword,
   resendForgotOtp,
+  getVerifyOtpPage,
 };
