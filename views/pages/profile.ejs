@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>User Profile</title>
 
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-
-  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
   <style>
@@ -75,7 +72,6 @@
       background: #e0e0e0;
     }
 
-    
     .main-content{
       padding:40px;
     }
@@ -130,85 +126,83 @@
       font-weight:500;
     }
 
-   
-.upload-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
+    .upload-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
 
-.upload-box {
-  background: #fff;
-  padding: 30px;
-  border-radius: 15px;
-  width: 400px;
-  text-align: center;
-}
+    .upload-box {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      width: 400px;
+      text-align: center;
+    }
 
-.upload-area {
-  border: 2px dashed #ccc;
-  padding: 40px;
-  margin: 20px 0;
-  cursor: pointer;
-}
+    .upload-area {
+      border: 2px dashed #ccc;
+      padding: 40px;
+      margin: 20px 0;
+      cursor: pointer;
+    }
 
-.upload-area img {
-  max-height: 200px;
-  object-fit: cover;
-}
+    .upload-area img {
+      max-height: 200px;
+      object-fit: cover;
+    }
 
-.btn-group {
-  display: flex;
-  justify-content: space-between;
-}
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+    }
 
-.apply-btn {
-  background: #000;
-  color: #fff;
-  border: none;
-  padding: 10px 30px;
-}
+    .apply-btn {
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 10px 30px;
+    }
 
-.cancel-btn {
-  background: #777;
-  color: #fff;
-  border: none;
-  padding: 10px 30px;
-}
+    .cancel-btn {
+      background: #777;
+      color: #fff;
+      border: none;
+      padding: 10px 30px;
+    }
 
-.eye-icon {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #555;
-}
+    .eye-icon {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #555;
+    }
 
-.google-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #cff4fc;
-  color: #1a73e8;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-top: 10px;
-  border: 1px solid #d2e3fc;
-}
+    .google-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #cff4fc;
+      color: #1a73e8;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 10px;
+      border: 1px solid #d2e3fc;
+    }
 
-.google-note i {
-  font-size: 14px;
-}
-
+    .google-note i {
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -218,27 +212,20 @@
 <div class="container-fluid">
   <div class="row">
 
-    
     <div class="col-md-4 col-lg-2 sidebar p-3 ms-5 ps-4">
-
       <div class="text-center mb-4">
-       <div class="profile-circle" id="profileBox">
-  <% if (user.profileImage) { %>
-    <img id="profileImg" src="<%= user.profileImage %>" />
-  <% } else { %>
-    <span id="profileInitial">
-      <%= user.fullName.charAt(0).toUpperCase() %>
-    </span>
-  <% } %>
-
-<span class="camera-icon" onclick="openModal()">
-    <i class="fa fa-camera"></i>
-  </span>
-</div>
-
-
-
-
+        <div class="profile-circle" id="profileBox">
+          <% if (user.profileImage) { %>
+            <img id="profileImg" src="<%= user.profileImage %>" />
+          <% } else { %>
+            <span id="profileInitial">
+              <%= user.fullName.charAt(0).toUpperCase() %>
+            </span>
+          <% } %>
+          <span class="camera-icon" onclick="openModal()">
+            <i class="fa fa-camera"></i>
+          </span>
+        </div>
         <h6 class="mt-2"><%= user.fullName %></h6>
       </div>
 
@@ -266,72 +253,75 @@
         <i class="fa fa-cube"></i> Wallet
       </a>
 
-    <form action="/api/auth/logout" method="POST">
-  <button class="menu-link" style="border:none;background:none;">
-    <i class="fa fa-sign-out-alt"></i> Logout
-  </button>
-</form>
+      <form action="/api/auth/logout" method="POST">
+        <button class="menu-link" style="border:none;background:none;">
+          <i class="fa fa-sign-out-alt"></i> Logout
+        </button>
+      </form>
     </div>
 
-   
     <div class="col-md-9 col-lg-9 ms-4 main-content">
-
       <div id="message" class="text-center mb-3"></div>
 
-     
       <div class="content-box">
         <h4>My Profile</h4>
 
         <form id="profileForm">
-          <input name="fullName" class="form-control mb-3" value="<%= user.fullName %>" required>
-          <input 
-  name="email"
-  class="form-control mb-3"
-  value="<%= user.email %>"
-  <%= user.provider === "google" ? "readonly" : "" %>
-  required
->
-<% if (user.provider === "google") { %>
-  <div class="google-note">
-    <i class="fa fa-shield-alt"></i>
-    <span>Email is managed by Google and cannot be changed.</span>
-  </div>
-<% } %>
+          <input
+            type="text"
+            name="fullName"
+            class="form-control mb-3"
+            value="<%= user.fullName %>"
+            minlength="3"
+            maxlength="30"
+            pattern="^[A-Za-z\s]+$"
+            title="Name should contain only letters"
+            required
+          >
+          <input
+            type="email"
+            name="email"
+            class="form-control mb-3"
+            value="<%= user.email %>"
+            pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+            title="Enter a valid email address"
+            <%= user.provider === "google" ? "readonly" : "" %>
+          >
+          <% if (user.provider === "google") { %>
+            <div class="google-note">
+              <i class="fa fa-shield-alt"></i>
+              <span>Email is managed by Google and cannot be changed.</span>
+            </div>
+          <% } %>
 
           <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
-        
         </form>
 
-      
-       <div id="emailOtpSection" style="display:none;" class="text-center mt-3">
-  <p>Enter OTP sent to new email</p>
+        <div id="emailOtpSection" style="display:none;" class="text-center mt-3">
+          <p>Enter OTP sent to new email</p>
+          <div id="otpBoxes" class="d-flex justify-content-center">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
 
-  <div id="otpBoxes" class="d-flex justify-content-center">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-  </div>
+          <div class="mt-2">
+            Resend OTP in <span id="emailCountdown">90</span>s
+          </div>
 
-  <div class="mt-2">
-    Resend OTP in <span id="emailCountdown">90</span>s
-  </div>
-
-  <button id="resendEmailOtpBtn" class="btn btn-link" disabled>
-    Resend OTP
-  </button>
-
-  <button id="verifyEmailOtpBtn" class="btn btn-success mt-2">
-    Verify OTP
-  </button>
-</div>
+          <button id="resendEmailOtpBtn" class="btn btn-link" disabled>
+            Resend OTP
+          </button>
+          <button id="verifyEmailOtpBtn" class="btn btn-success mt-2">
+            Verify OTP
+          </button>
+        </div>
       </div>
 
-     
       <div class="content-box">
-
         <% if (user.provider === "google") { %>
           <div class="alert alert-info">
             You signed in using Google. Password change is not available.
@@ -341,20 +331,45 @@
         <h4>Change Password</h4>
 
         <form id="passwordForm">
-         <div class="position-relative mb-3">
-  <input name="currentPassword" type="password" class="form-control" placeholder="Current Password" required>
-  <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
-</div>
+          <div class="position-relative mb-3">
+            <input
+              name="currentPassword"
+              type="password"
+              class="form-control"
+              placeholder="Current Password"
+              required
+            >
+            <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
+            <small class="text-danger error-message"></small>
+          </div>
 
-<div class="position-relative mb-3">
-  <input name="newPassword" type="password" class="form-control" placeholder="New Password" required>
-  <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
-</div>
+          <div class="position-relative mb-3">
+            <input
+              name="newPassword"
+              type="password"
+              class="form-control"
+              placeholder="New Password"
+              required
+            >
+            <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
+            <small class="text-danger error-message"></small>
+          </div>
 
-<div class="position-relative mb-3">
-  <input name="confirmPassword" type="password" class="form-control" placeholder="Confirm Password" required>
-  <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
-</div>
+          <div class="position-relative mb-3">
+            <input
+              name="confirmPassword"
+              type="password"
+              class="form-control"
+              placeholder="Confirm Password"
+              minlength="8"
+              pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
+              title="Password must contain uppercase, lowercase, number and special character"
+              required
+            >
+            <i class="fa fa-eye-slash eye-icon" onclick="togglePassword(this)"></i>
+            <small class="text-danger error-message"></small>
+          </div>
+
           <button class="btn btn-success w-100">Change Password</button>
         </form>
 
@@ -362,36 +377,36 @@
           Forgot Password?
         </button>
 
-       
-       <div id="forgotOtpSection" style="display:none;" class="text-center mt-3">
-  <p>Enter OTP sent to your email</p>
+        <div id="forgotOtpSection" style="display:none;" class="text-center mt-3">
+          <p>Enter OTP sent to your email</p>
+          <div id="forgotOtpBoxes" class="d-flex justify-content-center">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
 
-  <div id="forgotOtpBoxes" class="d-flex justify-content-center">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-    <input class="otp-input" maxlength="1">
-  </div>
+          <div class="mt-2">
+            Resend OTP in <span id="forgotCountdown">90</span>s
+          </div>
 
-  <div class="mt-2">
-    Resend OTP in <span id="forgotCountdown">90</span>s
-  </div>
+          <button id="resendForgotOtpBtn" class="btn btn-link" disabled>
+            Resend OTP
+          </button>
+          <button id="verifyForgotOtpBtn" class="btn btn-success mt-2">
+            Verify OTP
+          </button>
+        </div>
 
-  <button id="resendForgotOtpBtn" class="btn btn-link" disabled>
-    Resend OTP
-  </button>
-
-  <button id="verifyForgotOtpBtn" class="btn btn-success mt-2">
-    Verify OTP
-  </button>
-</div>
-
-        
         <div id="resetSection" style="display:none;" class="mt-3">
-          <input id="newPass" type="password" class="form-control mb-2" placeholder="New Password">
-          <input id="confirmPass" type="password" class="form-control mb-2" placeholder="Confirm Password">
+          <input id="newPass" type="password" class="form-control mb-2" placeholder="New Password" minlength="8"
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
+            title="Password must contain uppercase, lowercase, number and special character" required>
+          <input id="confirmPass" type="password" class="form-control mb-2" placeholder="Confirm Password" minlength="8"
+            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
+            title="Password must contain uppercase, lowercase, number and special character" required>
 
           <button id="resetBtn" class="btn btn-danger w-100">
             Reset Password
@@ -405,32 +420,41 @@
   </div>
 </div>
 
-
 <div id="uploadModal" class="upload-modal">
   <div class="upload-box">
-
     <h5>Update Profile Photo</h5>
-
     <div class="upload-area" id="uploadArea" onclick="fileInput.click()">
       <i class="fa fa-cloud-upload-alt" id="uploadIcon"></i>
       <p id="uploadText">Select a file or drag and drop here</p>
       <small>Max size: 2MB</small>
-
       <img id="previewImg" style="display:none; width:100%; border-radius:10px; margin-top:10px;" />
     </div>
 
-   
     <input type="file" id="fileInput" hidden accept="image/*">
 
     <div class="btn-group">
       <button id="applyBtn" class="apply-btn">Apply</button>
       <button onclick="closeModal()" class="cancel-btn">Cancel</button>
     </div>
+  </div>
+</div>
 
+<!-- SUCCESS MODAL -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center p-4" style="border-radius: 12px;">
+      <div class="modal-body">
+        <i class="fa-regular fa-circle-check text-success mb-3" style="font-size: 55px;"></i>
+        <h4 class="fw-bold mb-2">Success!</h4>
+        <p id="successModalText" class="text-muted"></p>
+        <button type="button" class="btn btn-dark px-4 mt-2" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
   </div>
 </div>
 
   <%- include("../partials/footer") %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 
 const profileForm = document.getElementById("profileForm");
@@ -457,8 +481,36 @@ const previewImg = document.getElementById("previewImg");
 const applyBtn = document.getElementById("applyBtn");
 const profileImg = document.getElementById("profileImg");
 
-// file upload
 
+const bootstrapSuccessModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+function showSuccessModal(msg) {
+  document.getElementById("successModalText").innerText = msg;
+  bootstrapSuccessModal.show();
+}
+
+
+function togglePassword(icon) {
+  const input = icon.parentElement.querySelector("input");
+  if (input.type === "password") {
+    input.type = "text";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
+  } else {
+    input.type = "password";
+    icon.classList.remove("fa-eye");
+    icon.classList.add("fa-eye-slash");
+  }
+}
+
+
+const fullNameInput = document.querySelector('input[name="fullName"]');
+
+fullNameInput.addEventListener("input", () => {
+  fullNameInput.value = fullNameInput.value.replace(/[^A-Za-z\s]/g, "");
+});
+
+// file upload
 const uploadModal = document.getElementById("uploadModal");
 
 function openModal() {
@@ -467,16 +519,35 @@ function openModal() {
 
 function closeModal() {
   uploadModal.style.display = "none";
-
-  // reset preview
   previewImg.style.display = "none";
   previewImg.src = "";
   fileInput.value = "";
 }
 
+// ================================
+// IMAGE VALIDATION
+// ================================
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (!file) return;
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    alert("Only JPG, PNG and WEBP images are allowed");
+    fileInput.value = "";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Image size must be below 2MB");
+    fileInput.value = "";
+    return;
+  }
 
   previewImg.src = URL.createObjectURL(file);
   previewImg.style.display = "block";
@@ -496,44 +567,50 @@ applyBtn.addEventListener("click", async () => {
 
   try {
     const res = await fetch("/profile/upload-photo", {
-  method: "POST",
-  body: formData
-});
+      method: "POST",
+      body: formData
+    });
 
     const result = await res.json();
 
     if (res.ok) {
-      alert(result.message);
-
-      
+      showSuccessModal(result.message);
       if (profileImg) {
         profileImg.src = result.image;
       }
-
       closeModal();
     } else {
-      alert(result.message);
+      message.innerText = result.message;
+      message.style.color = "red";
     }
   } catch (err) {
     console.log(err);
-    alert("Upload failed");
+    message.innerText = "Upload failed";
+    message.style.color = "red";
   }
 });
 
-
-//Otp field auto move
+// ================================
+// OTP INPUT VALIDATION
+// ================================
 document.querySelectorAll(".otp-input").forEach((input, i, arr) => {
   input.addEventListener("input", () => {
-    if (input.value && arr[i + 1]) arr[i + 1].focus();
+    input.value = input.value.replace(/[^0-9]/g, "");
+    if (input.value && arr[i + 1]) {
+      arr[i + 1].focus();
+    }
   });
 
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Backspace" && !input.value && arr[i - 1]) {
+    if (
+      e.key === "Backspace" &&
+      !input.value &&
+      arr[i - 1]
+    ) {
       arr[i - 1].focus();
     }
   });
 });
-
 
 // Get the otp
 function getOtp(containerId) {
@@ -542,7 +619,6 @@ function getOtp(containerId) {
 }
 
 // Email otp timer
-
 let emailTimer;
 
 function startEmailTimer(duration = 90) {
@@ -550,20 +626,15 @@ function startEmailTimer(duration = 90) {
   if (!countdown) return;
 
   let time = Number(duration);
-
   if (isNaN(time)) time = 90;
 
   resendEmailOtpBtn.disabled = true;
-
   clearInterval(emailTimer);
-
   countdown.innerText = time;
 
   emailTimer = setInterval(() => {
     time = Number(time) - 1;
-
     if (isNaN(time)) time = 0;
-
     countdown.innerText = time > 0 ? time : 0;
 
     if (time <= 0) {
@@ -573,10 +644,7 @@ function startEmailTimer(duration = 90) {
   }, 1000);
 }
 
-
 // Forgot Otp Timer
-
-
 let forgotTimer;
 
 function startForgotTimer(duration = 90) {
@@ -584,20 +652,15 @@ function startForgotTimer(duration = 90) {
   if (!countdown) return;
 
   let time = Number(duration);
-
   if (isNaN(time)) time = 90;
 
   resendForgotOtpBtn.disabled = true;
-
   clearInterval(forgotTimer);
-
   countdown.innerText = time;
 
   forgotTimer = setInterval(() => {
     time = Number(time) - 1;
-
     if (isNaN(time)) time = 0;
-
     countdown.innerText = time > 0 ? time : 0;
 
     if (time <= 0) {
@@ -607,33 +670,76 @@ function startForgotTimer(duration = 90) {
   }, 1000);
 }
 
-// Profile Upadte
-profileForm?.addEventListener("submit", async e => {
+// Profile from validation
+profileForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
+  message.innerText = "";
+
+  const fullName = profileForm.fullName.value.trim();
+  const email = profileForm.email.value.trim();
+
+  const nameRegex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!fullName || fullName.length < 3) {
+    message.innerText = "Full name must contain at least 3 characters";
+    message.style.color = "red";
+    return;
+  }
+
+  if (fullName.length > 30) {
+    message.innerText = "Full name cannot exceed 30 characters";
+    message.style.color = "red";
+    return;
+  }
+
+  if (!nameRegex.test(fullName)) {
+    message.innerText = "Full name can contain only letters";
+    message.style.color = "red";
+    return;
+  }
+
+  if (!emailRegex.test(email)) {
+    message.innerText = "Please enter a valid email";
+    message.style.color = "red";
+    return;
+  }
 
   const data = Object.fromEntries(new FormData(profileForm));
 
-  const res = await fetch("/profile", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  try {
+    const res = await fetch("/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-  const result = await res.json();
-  message.innerText = result.message;
+    const result = await res.json();
 
-  if (result.requireOtp) {
-    emailOtpSection.style.display = "block";
+    if (res.ok) {
+      showSuccessModal(result.message);
+      if (result.requireOtp) {
+        emailOtpSection.style.display = "block";
+        startEmailTimer(result.expiry);
+      }
+    } else {
+      message.innerText = result.message;
+      message.style.color = "red";
+    }
 
- 
-    startEmailTimer(result.expiry);
+  } catch (err) {
+    console.log(err);
+    message.innerText = "Something went wrong";
+    message.style.color = "red";
   }
 });
-
 
 // Verify email otp
 verifyEmailOtpBtn?.addEventListener("click", async () => {
   const otp = getOtp("otpBoxes");
+  message.innerText = "";
 
   const res = await fetch("/profile/verify-email-otp", {
     method: "POST",
@@ -642,68 +748,142 @@ verifyEmailOtpBtn?.addEventListener("click", async () => {
   });
 
   const result = await res.json();
-  message.innerText = result.message;
 
   if (res.ok) {
+    showSuccessModal(result.message);
     emailOtpSection.style.display = "none";
     clearInterval(emailTimer);
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
 
-
 // Resend email otp
 resendEmailOtpBtn?.addEventListener("click", async () => {
+  message.innerText = "";
   const res = await fetch("/profile/resend-email-otp", {
     method: "POST"
   });
 
   const result = await res.json();
-  message.innerText = result.message;
 
-  if (res.ok && result.expiry) {
-    startEmailTimer(result.expiry);
+  if (res.ok) {
+    showSuccessModal(result.message);
+    if (result.expiry) {
+      startEmailTimer(result.expiry);
+    }
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
 
-
-// Password change
-passwordForm?.addEventListener("submit", async e => {
+// password Validation
+passwordForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
+  message.innerText = "";
 
-  const data = Object.fromEntries(new FormData(passwordForm));
+  const currentPassword = passwordForm.querySelector('input[name="currentPassword"]');
+  const newPassword = passwordForm.querySelector('input[name="newPassword"]');
+  const confirmPassword = passwordForm.querySelector('input[name="confirmPassword"]');
 
-  const res = await fetch("/profile/change-password", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  const currentPasswordError = currentPassword.parentElement.querySelector(".error-message");
+  const newPasswordError = newPassword.parentElement.querySelector(".error-message");
+  const confirmPasswordError = confirmPassword.parentElement.querySelector(".error-message");
 
-  const result = await res.json();
-  message.innerText = result.message;
+  // clear previous errors
+  currentPasswordError.innerText = "";
+  newPasswordError.innerText = "";
+  confirmPasswordError.innerText = "";
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+  let hasError = false;
+
+  if (!currentPassword.value.trim()) {
+    currentPasswordError.innerText = "Current password is required";
+    hasError = true;
+  }
+
+  if (!newPassword.value.trim()) {
+    newPasswordError.innerText = "New password is required";
+    hasError = true;
+  } else if (!passwordRegex.test(newPassword.value)) {
+    newPasswordError.innerText = "Password must contain uppercase, lowercase, number and special character";
+    hasError = true;
+  }
+
+  if (!confirmPassword.value.trim()) {
+    confirmPasswordError.innerText = "Confirm password is required";
+    hasError = true;
+  } else if (newPassword.value !== confirmPassword.value) {
+    confirmPasswordError.innerText = "Passwords do not match";
+    hasError = true;
+  }
+
+  if (hasError) return;
+
+  try {
+    const res = await fetch("/profile/change-password", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword: currentPassword.value,
+        newPassword: newPassword.value,
+        confirmPassword: confirmPassword.value,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      if (result.message === "Incorrect current password") {
+        currentPasswordError.innerText = result.message;
+      } else if (result.message.includes("same")) {
+        newPasswordError.innerText = result.message;
+      } else {
+        confirmPasswordError.innerText = result.message;
+      }
+      return;
+    }
+
+    showSuccessModal(result.message);
+    passwordForm.reset();
+
+  } catch (err) {
+    console.log(err);
+    message.innerText = "Something went wrong";
+    message.style.color = "red";
+  }
 });
-
 
 // forgot password
 forgotBtn?.addEventListener("click", async () => {
+  message.innerText = "";
   const res = await fetch("/profile/forgot-password", {
     method: "POST"
   });
 
   const result = await res.json();
-  alert(result.message);
 
-  forgotOtpSection.style.display = "block";
-
-
-  if (result.expiry) {
-    startForgotTimer(result.expiry);
+  if (res.ok) {
+    showSuccessModal(result.message);
+    forgotOtpSection.style.display = "block";
+    if (result.expiry) {
+      startForgotTimer(result.expiry);
+    }
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
-
 
 // Verify forgot otp
 verifyForgotOtpBtn?.addEventListener("click", async () => {
   const otp = getOtp("forgotOtpBoxes");
+  message.innerText = "";
 
   const res = await fetch("/profile/verify-forgot-otp", {
     method: "POST",
@@ -712,32 +892,41 @@ verifyForgotOtpBtn?.addEventListener("click", async () => {
   });
 
   const result = await res.json();
-  message.innerText = result.message;
 
   if (res.ok) {
+    showSuccessModal(result.message);
     forgotOtpSection.style.display = "none";
     resetSection.style.display = "block";
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
 
 //Resend forgot otp
 resendForgotOtpBtn?.addEventListener("click", async () => {
+  message.innerText = "";
   const res = await fetch("/profile/forgot-password", {
     method: "POST"
   });
 
   const result = await res.json();
-  message.innerText = result.message;
 
-  if (res.ok && result.expiry) {
-    startForgotTimer(result.expiry);
+  if (res.ok) {
+    showSuccessModal(result.message);
+    if (result.expiry) {
+      startForgotTimer(result.expiry);
+    }
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
-
 
 // Reset password
 resetBtn?.addEventListener("click", async () => {
   const otp = getOtp("forgotOtpBoxes");
+  message.innerText = "";
 
   const res = await fetch("/profile/reset-password", {
     method: "POST",
@@ -750,15 +939,17 @@ resetBtn?.addEventListener("click", async () => {
   });
 
   const result = await res.json();
-  message.innerText = result.message;
 
   if (res.ok) {
+    showSuccessModal(result.message);
     resetSection.style.display = "none";
     forgotOtpSection.style.display = "none";
     clearInterval(forgotTimer);
+  } else {
+    message.innerText = result.message;
+    message.style.color = "red";
   }
 });
-
 </script>
 
 </body>

@@ -1,6 +1,10 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const strongPasswordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -27,16 +31,48 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update profile email otp
+// profile controller validation
 
 exports.updateProfile = async (req, res) => {
   try {
-    const {fullName, email} = req.body;
+    let {fullName, email} = req.body;
+
+    fullName = fullName?.trim();
+    email = email?.trim().toLowerCase();
+
+    const nameRegex = /^[A-Za-z]+(?:\s[A-Za-z]+)*$/;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!fullName || fullName.length < 3) {
+      return res.status(400).json({
+        message: "Full name must contain at least 3 characters",
+      });
+    }
+
+    if (fullName.length > 30) {
+      return res.status(400).json({
+        message: "Full name cannot exceed 30 characters",
+      });
+    }
+
+    if (!nameRegex.test(fullName)) {
+      return res.status(400).json({
+        message: "Full name can contain only letters",
+      });
+    }
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        message: "Please enter a valid email address",
+      });
+    }
 
     const user = await User.findById(req.user._id);
 
     if (email === user.email) {
       user.fullName = fullName;
+
       await user.save();
 
       return res.json({
@@ -45,17 +81,19 @@ exports.updateProfile = async (req, res) => {
       });
     }
 
-    // check duplicate email
     const existingUser = await User.findOne({
       email,
       _id: {$ne: user._id},
     });
 
     if (existingUser) {
-      return res.status(400).json({message: "Email already in use"});
+      return res.status(400).json({
+        message: "Email already in use",
+      });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     const OTP_VALIDITY = 90 * 1000;
 
     user.pendingEmail = email;
@@ -74,10 +112,14 @@ exports.updateProfile = async (req, res) => {
     return res.json({
       message: "OTP sent to new email",
       requireOtp: true,
-      expiry: user.emailOtpExpiry,
+      expiry: 90,
     });
   } catch (error) {
-    res.status(500).json({message: error.message});
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
@@ -139,7 +181,7 @@ exports.resendEmailOtp = async (req, res) => {
 
     res.json({
       message: "OTP resent",
-      expiry: user.emailOtpExpiry,
+      expiry: 90,
     });
   } catch (err) {
     res.status(500).json({message: err.message});
@@ -153,11 +195,34 @@ exports.changePassword = async (req, res) => {
     const {currentPassword, newPassword, confirmPassword} = req.body;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({message: "All fields required"});
+      return res.status(400).json({
+        message: "All fields are required",
+      });
     }
 
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({message: "Passwords do not match"});
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "Password must contain at least 8 characters",
+      });
+    }
+
+    if (!strongPasswordRegex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must contain uppercase, lowercase, number and special character",
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        message: "New password cannot be same as current password",
+      });
     }
 
     const user = await User.findById(req.user._id);
@@ -209,7 +274,7 @@ exports.profileForgotPassword = async (req, res) => {
 
     res.json({
       message: "OTP sent",
-      expiry: user.otpExpiry,
+      expiry: 90,
     });
   } catch (error) {
     res.status(500).json({message: error.message});
@@ -246,10 +311,24 @@ exports.profileResetPassword = async (req, res) => {
       return res.status(400).json({message: "OTP invalid or expired"});
     }
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({message: "Passwords do not match"});
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
     }
 
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match",
+      });
+    }
+
+    if (!strongPasswordRegex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must contain uppercase, lowercase, number and special character",
+      });
+    }
     user.password = await bcrypt.hash(newPassword, 10);
     user.otp = null;
     user.otpExpiry = null;
