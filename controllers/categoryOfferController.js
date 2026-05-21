@@ -1,21 +1,26 @@
-const Category = require("../models/categoryModel");
+const categoryOfferService = require("../services/addressService"); // Adjust paths based on your setup
+const offerService = require("../services/categoryOfferService");
 
 // get categories
 exports.getCategoryOffersPage = async (req, res) => {
-  const categories = await Category.find();
-  res.render("admin/categoryOffer", {categories});
+  try {
+    const categories = await offerService.getAllCategories();
+    res.render("admin/categoryOffer", {categories});
+  } catch (err) {
+    res.status(500).send("Internal Server Error");
+  }
 };
 
-// get sigle category for edit
+// get single category for edit
 exports.getCategoryOffer = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const discount = await offerService.getDiscountByCategoryId(req.params.id);
 
-    if (!category) {
+    if (!discount) {
       return res.status(404).json({message: "Not found"});
     }
 
-    res.json(category.discount);
+    res.json(discount);
   } catch (err) {
     res.status(500).json({message: err.message});
   }
@@ -26,25 +31,18 @@ exports.saveCategoryOffer = async (req, res) => {
   try {
     const {categoryId, type, value, expiryDate, isActive} = req.body;
 
-    const category = await Category.findById(categoryId);
+    const discount = await offerService.saveDiscountOffer(categoryId, {
+      type,
+      value,
+      expiryDate,
+      isActive,
+    });
 
-    if (!category) {
+    if (!discount) {
       return res.status(404).json({message: "Category not found"});
     }
 
-    category.discount.type = type;
-    category.discount.value = Number(value);
-    category.discount.expiryDate = new Date(expiryDate);
-
-    // IMPORTANT
-    category.discount.isActive = isActive === true || isActive === "true";
-
-    category.markModified("discount");
-
-    await category.save();
-
-    console.log(category.discount);
-
+    console.log("OFFER SAVED:", discount);
     res.json({message: "Offer saved"});
   } catch (err) {
     res.status(500).json({message: err.message});
@@ -54,22 +52,16 @@ exports.saveCategoryOffer = async (req, res) => {
 // toggle
 exports.toggleOfferStatus = async (req, res) => {
   try {
-    const category = await Category.findById(req.body.categoryId);
+    const discount = await offerService.toggleDiscountStatus(
+      req.body.categoryId,
+    );
 
-    if (!category) {
+    if (!discount) {
       return res.status(404).json({message: "Not found"});
     }
 
-    category.discount.isActive = !category.discount.isActive;
-
-    category.markModified("discount");
-
-    await category.save();
-
     res.json({
-      message: category.discount.isActive
-        ? "Offer Activated"
-        : "Offer Deactivated",
+      message: discount.isActive ? "Offer Activated" : "Offer Deactivated",
     });
   } catch (err) {
     res.status(500).json({message: err.message});

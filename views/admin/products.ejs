@@ -190,6 +190,7 @@
     <div class="modal fade" id="addModal">
       <div class="modal-dialog modal-lg">
         <div class="modal-content p-4">
+          <div id="alertBox"></div>
           <div class="mb-3">
             <label class="form-label">Product Name</label>
             <input
@@ -306,6 +307,16 @@
       const API = "/api/product";
       const CATEGORY_API = "/admin/category";
       const BRAND_API = "/admin/brand";
+      function showAlert(message, type = "success") {
+        const alertBox = document.getElementById("alertBox");
+
+        alertBox.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+      }
 
       function performSearch() {
         const input = document.getElementById("searchInput");
@@ -495,33 +506,104 @@
       });
 
       async function submitProduct() {
-        const formData = new FormData();
-        formData.append("name", document.getElementById("name").value);
-        formData.append("description", description.value);
-        formData.append("category", category.value);
-        formData.append("brand", brand.value);
+        try {
+          const name = document.getElementById("name").value.trim();
+          const desc = description.value.trim();
 
-        let variants = [];
-        document
-          .querySelectorAll("#variantContainer .variant-box")
-          .forEach((box) => {
+          // Frontend Validation
+          if (!name) {
+            return showAlert("Product name is required", "danger");
+          }
+
+          if (!category.value) {
+            return showAlert("Please select a category", "danger");
+          }
+
+          if (!brand.value) {
+            return showAlert("Please select a brand", "danger");
+          }
+
+          if (!desc) {
+            return showAlert("Description is required", "danger");
+          }
+
+          const variantBoxes = document.querySelectorAll(
+            "#variantContainer .variant-box",
+          );
+
+          if (variantBoxes.length === 0) {
+            return showAlert("Add at least one variant", "danger");
+          }
+
+          const formData = new FormData();
+
+          formData.append("name", name);
+          formData.append("description", desc);
+          formData.append("category", category.value);
+          formData.append("brand", brand.value);
+
+          let variants = [];
+
+          for (const box of variantBoxes) {
+            const size = box.querySelector(".size").value;
+            const color = box.querySelector(".color").value;
+            const price = box.querySelector(".price").value.trim();
+            const stock = box.querySelector(".stock").value.trim();
             const files = box.querySelector(".images").files;
+
+            // Variant validation
+            if (!price || price <= 0) {
+              return showAlert("Enter valid variant price", "danger");
+            }
+
+            if (!stock || stock < 0) {
+              return showAlert("Enter valid stock quantity", "danger");
+            }
+
+            if (files.length === 0) {
+              return showAlert("Please upload variant images", "danger");
+            }
+
             let images = [];
+
             for (let i = 0; i < files.length; i++) {
               formData.append("variantImages", files[i]);
               images.push("temp");
             }
+
             variants.push({
-              size: box.querySelector(".size").value,
-              color: box.querySelector(".color").value,
-              price: box.querySelector(".price").value,
-              stock: box.querySelector(".stock").value,
+              size,
+              color,
+              price,
+              stock,
               images,
             });
+          }
+
+          formData.append("variants", JSON.stringify(variants));
+
+          const res = await fetch(`${API}/add`, {
+            method: "POST",
+            body: formData,
           });
-        formData.append("variants", JSON.stringify(variants));
-        await fetch(`${API}/add`, {method: "POST", body: formData});
-        location.reload();
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            return showAlert(data.message || "Failed to add product", "danger");
+          }
+
+          showAlert(data.message || "Product added successfully", "success");
+
+          bootstrap.Modal.getInstance(
+            document.getElementById("addModal"),
+          ).hide();
+
+          loadProducts();
+        } catch (error) {
+          console.log(error);
+          showAlert("Something went wrong", "danger");
+        }
       }
 
       async function openEdit(id) {

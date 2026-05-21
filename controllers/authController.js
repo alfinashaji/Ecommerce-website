@@ -1,65 +1,24 @@
-const User = require("../models/userModel");
-const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer");
+const authService = require("../services/authService");
 
-//signup
+//Signup
 const signup = async (req, res) => {
   try {
-    const {fullName, email, password, referralCode} = req.body;
-
-    const existingUser = await User.findOne({email});
-
-    if (existingUser) {
-      req.session.error = "User alredy exists";
-      return res.redirect("/api/auth/signup");
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      fullName,
-      email,
-      password: hashed,
-      referralCode: referralCode || "",
-      isVerified: false,
-      status: "inactive",
-    });
-
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 90 * 1000;
-    await user.save();
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Your OTP Code",
-      text: `Your OTP is: ${otp}`,
-    });
+    await authService.registerUser(req.body);
 
     req.session.userData = {
-      fullName,
-      email,
-      password,
+      fullName: req.body.fullName,
+      email: req.body.email,
     };
 
-    res.redirect("/api/auth/verify-otp");
+    return res.redirect("/api/auth/verify-otp");
   } catch (error) {
-    return res.status(500).json({
-      message: "Server Error",
-      error: error.message,
-    });
+    console.error(error);
+    req.session.error = error.message;
+    return res.redirect("/api/auth/signup");
   }
 };
+
+//Get verify otp page
 const getVerifyOtpPage = async (req, res) => {
   try {
     if (!req.session.userData) {
@@ -67,12 +26,11 @@ const getVerifyOtpPage = async (req, res) => {
     }
 
     const email = req.session.userData.email;
-
-    const user = await User.findOne({email});
+    const user = await authService.getUserByEmail(email);
 
     res.render("auth/otp", {
       email,
-      otpExpiry: user?.otpExpiry ? new Date(user.otpExpiry).getTime() : 0,
+      otpExpiry: user?.otpExpiry || 0,
       error: req.session.error,
       success: req.session.success,
     });
@@ -83,283 +41,121 @@ const getVerifyOtpPage = async (req, res) => {
     return res.redirect("/api/auth/signup");
   }
 };
+
 // Resend OTP
 const resendOtp = async (req, res) => {
   try {
-    const {email} = req.body;
-
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User not found";
-      return res.redirect("/api/auth/signup");
-    }
-
-    if (user.lastOtpSentAt && Date.now() - user.lastOtpSentAt < 30 * 1000) {
-      req.session.error = "Please wait before resending OTP";
-      return res.redirect("/api/auth/verify-otp");
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 90 * 1000;
-    user.lastOtpSentAt = Date.now();
-
-    await user.save();
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Resend OTP",
-      text: `Your new OTP is: ${otp}`,
-    });
-
+    await authService.refreshUserOtp(req.body.email, "standard");
     req.session.success = "OTP resent successfully";
-
-    return res.redirect("/api/auth/verify-otp?email=" + email);
+    return res.redirect("/api/auth/verify-otp");
   } catch (error) {
-    req.session.error = "Error resending OTP";
+    console.error(error);
+    req.session.error = error.message;
     return res.redirect("/api/auth/verify-otp");
   }
 };
 
-// Verify OTP
+//Verify OTP
 const verifyOtp = async (req, res) => {
   try {
     if (!req.session.userData) {
       req.session.error = "Session expired";
       return res.redirect("/api/auth/signup");
     }
-    const {otp} = req.body;
 
-    const email = req.session.userData?.email;
+    await authService.verifyUserOtp(req.session.userData.email, req.body.otp);
 
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User Not found";
-      return res.redirect("/api/auth/signup");
-    }
-
-    if (String(user.otp) !== String(otp)) {
-      req.session.error = "Invalid OTP";
-      return res.redirect("/api/auth/verify-otp");
-    }
-
-    if (user.otpExpiry < Date.now()) {
-      req.session.error = "OTP expired";
-      return res.redirect("/api/auth/verify-otp");
-    }
-
-    user.isVerified = true;
-    user.status = "active";
-    user.otp = null;
-    user.otpExpiry = null;
-
-    await user.save();
     req.session.success = "Signup successful. Please login";
     delete req.session.userData;
+
     return res.redirect("/api/auth/login");
   } catch (error) {
-    return res.status(500).json({
-      message: "Error verifying OTP",
-      error: error.message,
-    });
+    req.session.error = error.message;
+    return res.redirect("/api/auth/verify-otp");
   }
 };
 
-// Forgot Password
-const forgotPassword = async (req, res) => {
-  try {
-    const {email} = req.body;
-
-    const user = await User.findOne({email});
-
-    if (!user) {
-      return res.status(404).json({message: "User not found"});
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 90 * 1000;
-
-    await user.save();
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Forgot Password OTP",
-      text: `Your OTP is ${otp}`,
-    });
-
-    req.session.forgotEmail = email;
-
-    return res.redirect("/api/auth/verify-forgot-otp");
-  } catch (error) {
-    return res.status(500).json({message: error.message});
-  }
-};
-
-// Resend Forgot OTP
-const resendForgotOtp = async (req, res) => {
-  try {
-    const {email} = req.body;
-
-    if (!email) {
-      req.session.error = "Email is required";
-      return res.redirect("/api/auth/forgot-password");
-    }
-
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User not found";
-      return res.redirect("/api/auth/forgot-password");
-    }
-
-    if (user.lastOtpSentAt && Date.now() - user.lastOtpSentAt < 30 * 1000) {
-      req.session.error = "Please wait before resending OTP";
-      return res.redirect("/api/auth/verify-forgot-otp");
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 90 * 1000;
-    user.lastOtpSentAt = Date.now();
-
-    await user.save();
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Resend Forgot Password OTP",
-      text: `Your OTP is ${otp}`,
-    });
-
-    req.session.success = "OTP resent successfully";
-
-    return res.redirect("/api/auth/verify-forgot-otp");
-  } catch (error) {
-    return res.status(500).json({message: error.message});
-  }
-};
-
-// Verify Forgot OTP
-const verifyForgotOtp = async (req, res) => {
-  try {
-    const {email, otp} = req.body;
-
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User not found";
-      return res.redirect("/api/auth/forgot-password");
-    }
-
-    // invalid otp
-    if (String(user.otp) !== String(otp)) {
-      req.session.error = "Invalid OTP";
-
-      return res.redirect("/api/auth/verify-forgot-otp?email=" + email);
-    }
-
-    // expired otp
-    if (user.otpExpiry < Date.now()) {
-      req.session.error = "OTP expired";
-
-      return res.redirect("/api/auth/verify-forgot-otp?email=" + email);
-    }
-
-    // verified successfully
-    req.session.resetEmail = email;
-
-    return res.redirect("/api/auth/reset-password");
-  } catch (error) {
-    return res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-// Login
+//login
 const login = async (req, res) => {
   try {
     const {email, password} = req.body;
-
-    console.log("LOGIN HIT");
-    console.log("SESSION BEFORE:", req.session);
-
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User not found";
-      return res.redirect("/api/auth/login");
-    }
-
-    if (user.status === "blocked") {
-      req.session.error = "You are blocked by admin";
-      return res.redirect("/api/auth/login");
-    }
-
-    if (!user.password) {
-      req.session.error = "Please login with Google";
-      return res.redirect("/api/auth/login");
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match) {
-      req.session.error = "Invalid password";
-      return res.redirect("/api/auth/login");
-    }
+    const user = await authService.authenticateUser(email, password);
 
     delete req.session.adminId;
-
     req.session.userId = user._id;
-
-    console.log("SESSION AFTER:", req.session);
 
     return res.redirect("/home");
   } catch (error) {
-    console.log("LOGIN ERROR:", error);
-    req.session.error = "Something went wrong";
+    console.error(error);
+    req.session.error = error.message;
     return res.redirect("/api/auth/login");
   }
 };
 
-// Reset Password
+//Forgot password
+const forgotPassword = async (req, res) => {
+  try {
+    await authService.initiatePasswordReset(req.body.email);
+    req.session.forgotEmail = req.body.email;
+    return res.redirect("/api/auth/verify-forgot-otp");
+  } catch (error) {
+    req.session.error = error.message;
+    return res.redirect("/api/auth/forgot-password");
+  }
+};
 
+//Get forgot otp page
+const getForgotOtpPage = async (req, res) => {
+  try {
+    const email = req.session.forgotEmail;
+    if (!email) {
+      return res.redirect("/api/auth/forgot-password");
+    }
+
+    const user = await authService.getUserByEmail(email);
+
+    res.render("auth/forgot-otp", {
+      email,
+      otpExpiry: user?.otpExpiry || 0,
+      error: req.session.error,
+      success: req.session.success,
+    });
+
+    req.session.error = null;
+    req.session.success = null;
+  } catch (error) {
+    return res.redirect("/api/auth/forgot-password");
+  }
+};
+
+// Resend forgot otp
+const resendForgotOtp = async (req, res) => {
+  try {
+    await authService.refreshUserOtp(req.body.email, "forgot");
+    req.session.success = "OTP resent successfully";
+    return res.redirect("/api/auth/verify-forgot-otp");
+  } catch (error) {
+    req.session.error = error.message;
+    return res.redirect("/api/auth/verify-forgot-otp");
+  }
+};
+
+// Verify forgot OTP
+const verifyForgotOtp = async (req, res) => {
+  try {
+    await authService.verifyResetOtpOnly(req.body.email, req.body.otp);
+    req.session.resetEmail = req.body.email;
+    return res.redirect("/api/auth/reset-password");
+  } catch (error) {
+    req.session.error = error.message;
+    return res.redirect("/api/auth/verify-forgot-otp");
+  }
+};
+
+//Reset Password
 const resetPassword = async (req, res) => {
   try {
     const {newPassword, confirmPassword} = req.body;
-
     const email = req.session.resetEmail;
 
     if (!email) {
@@ -377,42 +173,18 @@ const resetPassword = async (req, res) => {
       return res.redirect("/api/auth/reset-password");
     }
 
-    const user = await User.findOne({email});
-
-    if (!user) {
-      req.session.error = "User not found";
-      return res.redirect("/api/auth/forgot-password");
-    }
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-
-    user.password = hashed;
-    user.otp = null;
-    user.otpExpiry = null;
-
-    await user.save();
+    await authService.finalizePasswordReset(email, newPassword);
 
     delete req.session.resetEmail;
     delete req.session.forgotEmail;
 
     req.session.success = "Password reset successful";
-
     return res.redirect("/api/auth/login");
   } catch (error) {
-    return res.status(500).json({
-      message: "Error resetting password",
-      error: error.message,
-    });
+    req.session.error = error.message;
+    return res.redirect("/api/auth/reset-password");
   }
 };
-function handleError(req, res, isAjax, message) {
-  if (isAjax) {
-    return res.status(400).json({message});
-  }
-
-  req.session.error = message;
-  return res.redirect("/api/auth/login");
-}
 
 module.exports = {
   signup,
@@ -420,8 +192,9 @@ module.exports = {
   verifyOtp,
   login,
   forgotPassword,
+  resendForgotOtp,
   verifyForgotOtp,
   resetPassword,
-  resendForgotOtp,
   getVerifyOtpPage,
+  getForgotOtpPage,
 };

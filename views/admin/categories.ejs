@@ -78,12 +78,15 @@
           </div>
 
           <div class="modal-body">
+            <div id="addCategoryError"></div>
+
             <input
               type="text"
               id="addName"
               class="form-control mb-2"
               placeholder="Category Name"
             />
+
             <input
               type="text"
               id="addDesc"
@@ -225,8 +228,17 @@
         const name = document.getElementById("addName").value.trim();
         const description = document.getElementById("addDesc").value.trim();
 
+        const errorBox = document.getElementById("addCategoryError");
+
+        errorBox.innerHTML = "";
+
         if (!name) {
-          return showAlert("Name is required", "danger");
+          errorBox.innerHTML = `
+      <div class="alert alert-danger">
+        Name is required
+      </div>
+    `;
+          return;
         }
 
         const res = await fetch(`${API}/add`, {
@@ -238,13 +250,20 @@
         const data = await res.json();
 
         if (!res.ok) {
-          return showAlert(data.message, "danger");
+          errorBox.innerHTML = `
+      <div class="alert alert-danger">
+        ${data.message}
+      </div>
+    `;
+          return;
         }
 
         showAlert("Category added successfully");
 
         document.getElementById("addName").value = "";
         document.getElementById("addDesc").value = "";
+
+        errorBox.innerHTML = "";
 
         bootstrap.Modal.getInstance(document.getElementById("addModal")).hide();
 

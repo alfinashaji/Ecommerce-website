@@ -8,7 +8,6 @@ const {
   toggleBrandStatus,
 } = require("../controllers/brandController");
 const uploadBrand = require("../middleware/uploadBrand");
-// ================= ROUTES =================
 
 // Add brand
 router.post("/add", uploadBrand.single("logo"), addBrand);
@@ -19,7 +18,7 @@ router.get("/", getBrand);
 // Edit brand
 router.put("/edit/:id", uploadBrand.single("logo"), editBrand);
 
-// Toggle (List / Unlist)
+// Toggle
 router.patch("/toggle/:id", toggleBrandStatus);
 
 module.exports = router;

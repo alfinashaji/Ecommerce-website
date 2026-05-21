@@ -95,7 +95,7 @@
     const countdown = document.getElementById("countdown");
 const resendBtn = document.getElementById("resendBtn");
 
-const otpExpiry = Number("<%= otpExpiry || 0 %>");
+const otpExpiry = new Date("<%= otpExpiry %>").getTime();
 
 function updateTimer() {
   const now = Date.now();

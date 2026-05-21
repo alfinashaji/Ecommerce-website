@@ -93,7 +93,6 @@ router.get("/reset-password", (req, res) => {
 
 //LOGIN PAGE
 router.get("/login", (req, res) => {
-  // already logged in
   if (req.session.userId) {
     return res.redirect("/home");
   }

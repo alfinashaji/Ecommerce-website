@@ -1,13 +1,9 @@
-const Address = require("../models/addressModel");
+const addressService = require("../services/addressService");
 
 // address adding
 exports.addAddress = async (req, res) => {
   try {
-    const address = await Address.create({
-      ...req.body,
-      user: req.user._id,
-    });
-
+    await addressService.createAddress(req.body, req.user._id);
     res.json({message: "Address added successfully"});
   } catch (err) {
     return res.render("pages/add-address", {
@@ -19,33 +15,44 @@ exports.addAddress = async (req, res) => {
 
 // read all address
 exports.getAddresses = async (req, res) => {
-  console.log("USER:", req.user);
-
-  const addresses = await Address.find({user: req.user._id});
-
-  console.log("ADDRESSES:", addresses);
-
-  res.render("pages/address", {addresses});
+  try {
+    const addresses = await addressService.getAllAddresses(req.user._id);
+    res.render("pages/address", {addresses});
+  } catch (err) {
+    res.status(500).send("Internal Server Error");
+  }
 };
 
-// edit address
+// edit address page
 exports.getEditAddress = async (req, res) => {
-  const address = await Address.findById(req.params.id);
-  console.log("EDIT PAGE ADDRESS:", address);
-  res.render("pages/editAddress", {address});
+  try {
+    const address = await addressService.getAddressById(req.params.id);
+    res.render("pages/editAddress", {address});
+  } catch (err) {
+    res.status(500).send("Internal Server Error");
+  }
 };
-// read single address
+
+// read single address (API)
 exports.getSingleAddress = async (req, res) => {
-  const address = await Address.findById(req.params.id);
-  res.json(address);
+  try {
+    const address = await addressService.getAddressById(req.params.id);
+    if (!address) {
+      return res.status(404).json({message: "Address not found"});
+    }
+    res.json(address);
+  } catch (err) {
+    res.status(500).json({message: "Error fetching address"});
+  }
 };
 
 // update address
 exports.updateAddress = async (req, res) => {
   try {
-    const updated = await Address.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const updated = await addressService.updateAddressById(
+      req.params.id,
+      req.body,
+    );
 
     if (!updated) {
       return res.status(404).json({message: "Address not found"});
@@ -60,6 +67,10 @@ exports.updateAddress = async (req, res) => {
 
 // delete address
 exports.deleteAddress = async (req, res) => {
-  await Address.findByIdAndDelete(req.params.id);
-  res.json({message: "Address deleted"});
+  try {
+    await addressService.deleteAddressById(req.params.id);
+    res.json({message: "Address deleted"});
+  } catch (err) {
+    res.status(500).json({message: "Deletion failed"});
+  }
 };

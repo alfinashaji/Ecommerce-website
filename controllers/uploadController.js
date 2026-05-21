@@ -1,4 +1,4 @@
-const User = require("../models/userModel");
+const uploadService = require("../services/uploadService");
 
 exports.uploadProfilePic = async (req, res) => {
   try {
@@ -12,18 +12,21 @@ exports.uploadProfilePic = async (req, res) => {
       return res.status(400).json({message: "No file uploaded"});
     }
 
-    const imagePath = "/uploads/" + req.file.filename;
+    const imagePath = await uploadService.updateUserProfileImage(
+      userId,
+      req.file.filename,
+    );
 
-    await User.findByIdAndUpdate(userId, {
-      profileImage: imagePath,
-    });
+    if (!imagePath) {
+      return res.status(404).json({message: "User account not found"});
+    }
 
-    res.json({
+    return res.json({
       message: "Upload success",
       image: imagePath,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({message: "Upload failed"});
+    console.error("Profile Pic Upload Controller Error:", error);
+    return res.status(500).json({message: "Upload failed"});
   }
 };
