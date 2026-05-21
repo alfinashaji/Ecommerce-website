@@ -6,6 +6,10 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css"
+    />
     <style>
       body {
         background-color: #f8f9fa;
@@ -28,7 +32,6 @@
         padding: 10px;
       }
 
-      /* Variant Box Styling */
       .variant-box {
         background: transparent;
         border: none !important;
@@ -44,7 +47,6 @@
         float: right;
       }
 
-      /* Image Preview Styling */
       .preview-main {
         width: 100%;
         max-width: 250px;
@@ -87,6 +89,7 @@
         height: 20px;
         font-size: 12px;
         cursor: pointer;
+        z-index: 10;
       }
 
       .btn-save {
@@ -110,6 +113,21 @@
         margin-top: 20px;
         margin-bottom: 20px;
         color: #555;
+      }
+
+      .cropper-container-wrapper {
+        max-height: 400px;
+        width: 100%;
+        overflow: hidden;
+        background-color: #222;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #cropperImageTarget {
+        max-width: 100%;
+        max-height: 400px;
+        display: block;
       }
     </style>
   </head>
@@ -157,7 +175,6 @@
           Clear
         </button>
       </div>
-      <!-- TABLE -->
       <div class="card shadow-sm">
         <div class="card-body">
           <table class="table table-hover text-center align-middle">
@@ -175,19 +192,16 @@
             <tbody id="productTable"></tbody>
           </table>
         </div>
-        <!-- Add this below the card containing the table -->
         <div class="d-flex justify-content-between align-items-center mt-3">
           <div id="paginationInfo" class="text-muted"></div>
           <nav>
-            <ul class="pagination mb-0" id="paginationControls">
-              <!-- Pagination buttons will be injected here -->
-            </ul>
+            <ul class="pagination mb-0" id="paginationControls"></ul>
           </nav>
         </div>
       </div>
     </div>
 
-    <div class="modal fade" id="addModal">
+    <div class="modal fade" id="addModal" data-bs-backdrop="static">
       <div class="modal-dialog modal-lg">
         <div class="modal-content p-4">
           <div id="alertBox"></div>
@@ -233,7 +247,7 @@
       </div>
     </div>
 
-    <div class="modal fade" id="editModal">
+    <div class="modal fade" id="editModal" data-bs-backdrop="static">
       <div class="modal-dialog modal-lg">
         <div class="modal-content p-4">
           <input type="hidden" id="editId" />
@@ -285,6 +299,38 @@
       </div>
     </div>
 
+    <div
+      class="modal fade"
+      id="cropperModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+      style="z-index: 1060"
+    >
+      <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Crop Image (<span id="cropProgressText">1/1</span>)
+            </h5>
+          </div>
+          <div class="modal-body p-0">
+            <div class="cropper-container-wrapper">
+              <img id="cropperImageTarget" src="" alt="Crop Source Layer" />
+            </div>
+          </div>
+          <div class="modal-footer d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" id="btnSkipCrop">
+              Skip
+            </button>
+            <button type="button" class="btn btn-primary" id="btnConfirmCrop">
+              Crop & Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW IMAGES MODAL -->
     <div class="modal fade" id="viewModal">
       <div class="modal-dialog modal-lg">
         <div class="modal-content p-3">
@@ -293,6 +339,8 @@
         </div>
       </div>
     </div>
+
+    <!-- SUCCESS MODAL -->
     <div class="modal fade" id="successModal">
       <div class="modal-dialog">
         <div class="modal-content text-center p-4">
@@ -307,21 +355,27 @@
       const API = "/api/product";
       const CATEGORY_API = "/admin/category";
       const BRAND_API = "/admin/brand";
+
+      let addedFilesMemory = [];
+      let currentCropQueue = [];
+      let currentQueueIndex = 0;
+      let activeCropperInstance = null;
+      let activeTargetContainer = null;
+      let activeFileInputElement = null;
+
       function showAlert(message, type = "success") {
         const alertBox = document.getElementById("alertBox");
-
         alertBox.innerHTML = `
-    <div class="alert alert-${type} alert-dismissible fade show">
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-  `;
+          <div class="alert alert-${type} alert-dismissible fade show">
+            ${message}
+            <button type="button" class="btn-close" data-bs-alertBox="alert"></button>
+          </div>
+        `;
       }
 
       function performSearch() {
         const input = document.getElementById("searchInput");
-        const query = input.value.trim(); // .trim() removes accidental spaces
-
+        const query = input.value.trim();
         if (query === "") {
           loadProducts();
         } else {
@@ -338,7 +392,7 @@
       const limit = 2;
 
       async function loadProducts(searchQuery = "", page = 1) {
-        currentPage = page; // Update global state
+        currentPage = page;
         const productTable = document.getElementById("productTable");
         const paginationControls =
           document.getElementById("paginationControls");
@@ -353,10 +407,9 @@
           const res = await fetch(url);
           const data = await res.json();
 
-          // 1. Render Table Rows
           productTable.innerHTML = "";
           if (!data.products || data.products.length === 0) {
-            productTable.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No products found</td></tr>`;
+            productTable.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No products found</td></tr>`;
             paginationControls.innerHTML = "";
             paginationInfo.innerText = "";
             return;
@@ -367,31 +420,25 @@
               ? Math.min(...p.variants.map((v) => v.price || 0))
               : 0;
             productTable.innerHTML += `
-        <tr>
-          <td>
-  <img 
-    src="${p.variants[0]?.images[0]}" 
-    width="60" 
-    height="60"
-    style="object-fit:cover; border-radius:6px;"
-  >
-</td>
-          <td>${p.name}</td>
-          <td>${p.category?.name || "-"}</td>
-          <td>${p.brand?.name || "-"}</td>
-          <td>₹${minPrice}</td>
-          <td><span class="badge ${p.isListed ? "bg-success" : "bg-secondary"}">${p.isListed ? "Listed" : "Unlisted"}</span></td>
-          <td>
-            <button class="btn btn-info btn-sm text-white" onclick="viewImages('${p._id}')">View</button>
-            <button class="btn btn-warning btn-sm text-white" onclick="openEdit('${p._id}')">Edit</button>
-            <button class="btn btn-sm ${p.isListed ? "btn-danger" : "btn-success"}" onclick="toggleProduct('${p._id}')">
-              ${p.isListed ? "Unlist" : "List"}
-            </button>
-          </td>
-        </tr>`;
+              <tr>
+                <td>
+                  <img src="${p.variants[0]?.images[0] || "https://via.placeholder.com/60?text=No+Image"}" width="60" height="60" style="object-fit:cover; border-radius:6px;">
+                </td>
+                <td>${p.name}</td>
+                <td>${p.category?.name || "-"}</td>
+                <td>${p.brand?.name || "-"}</td>
+                <td>₹${minPrice}</td>
+                <td><span class="badge ${p.isListed ? "bg-success" : "bg-secondary"}">${p.isListed ? "Listed" : "Unlisted"}</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm text-white" onclick="viewImages('${p._id}')">View</button>
+                  <button class="btn btn-warning btn-sm text-white" onclick="openEdit('${p._id}')">Edit</button>
+                  <button class="btn btn-sm ${p.isListed ? "btn-danger" : "btn-success"}" onclick="toggleProduct('${p._id}')">
+                    ${p.isListed ? "Unlist" : "List"}
+                  </button>
+                </td>
+              </tr>`;
           });
 
-          //Render Pagination Controls
           renderPagination(data.totalPages, data.currentPage, searchQuery);
         } catch (err) {
           console.error("Error loading products:", err);
@@ -402,145 +449,308 @@
         const container = document.getElementById("paginationControls");
         container.innerHTML = "";
 
-        // Previous Button
         container.innerHTML += `
-    <li class="page-item ${activePage === 1 ? "disabled" : ""}">
-      <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage - 1})"><span aria-hidden="true">&laquo;</span></a>
-    </li>`;
+          <li class="page-item ${activePage === 1 ? "disabled" : ""}">
+            <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage - 1})">&laquo;</a>
+          </li>`;
 
-        // Page Numbers
         for (let i = 1; i <= totalPages; i++) {
           container.innerHTML += `
-      <li class="page-item ${i === activePage ? "active" : ""}">
-        <a class="page-link" href="#" onclick="loadProducts('${query}', ${i})">${i}</a>
-      </li>`;
+            <li class="page-item ${i === activePage ? "active" : ""}">
+              <a class="page-link" href="#" onclick="loadProducts('${query}', ${i})">${i}</a>
+            </li>`;
         }
 
-        // Next Button
         container.innerHTML += `
-    <li class="page-item ${activePage === totalPages ? "disabled" : ""}">
-      <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage + 1})"><span aria-hidden="true">&raquo;</span></a>
-    </li>`;
+          <li class="page-item ${activePage === totalPages ? "disabled" : ""}">
+            <a class="page-link" href="#" onclick="loadProducts('${query}', ${activePage + 1})">&raquo;</a>
+          </li>`;
       }
 
       function getVariantHTML(v = null, isEdit = false) {
+        const uniqueId = "var_" + Math.random().toString(36).substring(2, 9);
         return `
-      <div class="variant-box border-bottom pb-4 mb-4">
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <label class="form-label">Size</label>
-            <select class="form-select size">
-                <option value="S" ${v?.size === "S" ? "selected" : ""}>S</option>
-                <option value="M" ${v?.size === "M" ? "selected" : ""}>M</option>
-                <option value="L" ${v?.size === "L" ? "selected" : ""}>L</option>
-                <option value="XL" ${v?.size === "XL" ? "selected" : ""}>XL</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label d-block">Color</label>
-            <input type="color" class="form-control form-control-color w-100 color" value="${v?.color || "#000000"}">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Stock Quantity</label>
-            <input class="form-control stock" placeholder="0" value="${v?.stock || ""}">
-          </div>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Price</label>
-            <input class="form-control price" placeholder="₹" value="${v?.price || ""}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Upload Images</label>
-          <input type="file" class="form-control images" multiple>
-        </div>
-        <div class="preview-main">
-           <img src="https://via.placeholder.com/150?text=No+Image" class="main-preview-img" style="max-width:100%">
-        </div>
-        <div class="preview-thumbnails">
-           ${
-             isEdit && v?.images
-               ? v.images
-                   .map(
-                     (img) => `
-            <div class="thumb-wrapper">
-                <img src="${img}">
-                <button class="remove-img" onclick="this.parentElement.remove()">×</button>
-                <input type="hidden" class="oldImage" value="${img}">
-            </div>`,
-                   )
-                   .join("")
-               : ""
-           }
-        </div>
-        <button class="btn btn-link text-danger btn-sm p-0 mt-2" onclick="this.parentElement.remove()">Remove Variant</button>
-      </div>`;
+          <div class="variant-box border-bottom pb-4 mb-4" id="${uniqueId}">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Size</label>
+                <select class="form-select size">
+                    <option value="S" ${v?.size === "S" ? "selected" : ""}>S</option>
+                    <option value="M" ${v?.size === "M" ? "selected" : ""}>M</option>
+                    <option value="L" ${v?.size === "L" ? "selected" : ""}>L</option>
+                    <option value="XL" ${v?.size === "XL" ? "selected" : ""}>XL</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label d-block">Color</label>
+                <input type="color" class="form-control form-control-color w-100 color" value="${v?.color || "#000000"}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Stock Quantity</label>
+                <input class="form-control stock" type="number" placeholder="0" value="${v?.stock || ""}">
+              </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Price</label>
+                <input class="form-control price" type="number" placeholder="₹" value="${v?.price || ""}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Upload Images</label>
+              <input type="file" class="form-control images" accept="image/*" multiple>
+            </div>
+            <div class="preview-main">
+               <img src="https://via.placeholder.com/150?text=No+Image" class="main-preview-img" style="max-width:100%">
+            </div>
+            <div class="preview-thumbnails">
+               ${
+                 isEdit && v?.images
+                   ? v.images
+                       .map(
+                         (img) => `
+                 <div class="thumb-wrapper">
+                     <img src="${img}">
+                     <button class="remove-img" type="button" onclick="removeExistingImage(this, '${img}')">×</button>
+                     <input type="hidden" class="oldImage" value="${img}">
+                 </div>`,
+                       )
+                       .join("")
+                   : ""
+               }
+            </div>
+            <button class="btn btn-link text-danger btn-sm p-0 mt-2" type="button" onclick="removeVariantBox('${uniqueId}')">Remove Variant</button>
+          </div>`;
       }
 
       function addVariant() {
+        const variantContainer = document.getElementById("variantContainer");
         variantContainer.insertAdjacentHTML("beforeend", getVariantHTML());
       }
 
       function addEditVariant() {
-        editVariantContainer.insertAdjacentHTML("beforeend", getVariantHTML());
+        const editVariantContainer = document.getElementById(
+          "editVariantContainer",
+        );
+        editVariantContainer.insertAdjacentHTML(
+          "beforeend",
+          getVariantHTML(null, true),
+        );
       }
 
+      function removeVariantBox(id) {
+        const target = document.getElementById(id);
+        if (target) {
+          addedFilesMemory = addedFilesMemory.filter(
+            (item) => item.variantBoxElement !== target,
+          );
+          target.remove();
+        }
+      }
+
+      function removeExistingImage(btn, imgUrl) {
+        btn.parentElement.remove();
+      }
       document.addEventListener("change", (e) => {
         if (e.target.classList.contains("images")) {
-          const container = e.target.closest(".variant-box");
-          const thumbContainer = container.querySelector(".preview-thumbnails");
-          const mainPreview = container.querySelector(".main-preview-img");
-          thumbContainer.innerHTML = "";
+          const files = Array.from(e.target.files);
+          if (!files.length) return;
 
-          Array.from(e.target.files).forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              if (index === 0) mainPreview.src = event.target.result;
-              thumbContainer.innerHTML += `
-            <div class="thumb-wrapper">
-                <img src="${event.target.result}">
-            </div>`;
+          activeFileInputElement = e.target;
+          activeTargetContainer = e.target.closest(".variant-box");
+
+          let variantMemory = addedFilesMemory.find(
+            (item) => item.variantBoxElement === activeTargetContainer,
+          );
+          if (!variantMemory) {
+            variantMemory = {
+              variantBoxElement: activeTargetContainer,
+              files: [],
             };
-            reader.readAsDataURL(file);
-          });
+            addedFilesMemory.push(variantMemory);
+          }
+
+          currentCropQueue = files;
+          currentQueueIndex = 0;
+
+          launchCropperInterface();
         }
       });
+
+      function launchCropperInterface() {
+        if (currentQueueIndex >= currentCropQueue.length) {
+          activeFileInputElement.value = "";
+          return;
+        }
+
+        const currentFile = currentCropQueue[currentQueueIndex];
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+          const cropperImageTarget =
+            document.getElementById("cropperImageTarget");
+          cropperImageTarget.src = event.target.result;
+
+          document.getElementById("cropProgressText").innerText =
+            `${currentQueueIndex + 1}/${currentCropQueue.length}`;
+
+          const cropperModalEl = document.getElementById("cropperModal");
+          const cropperModalInstance =
+            bootstrap.Modal.getOrCreateInstance(cropperModalEl);
+          cropperModalInstance.show();
+          if (activeCropperInstance) {
+            activeCropperInstance.destroy();
+          }
+
+          activeCropperInstance = new Cropper(cropperImageTarget, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+          });
+        };
+
+        reader.readAsDataURL(currentFile);
+      }
+
+      document
+        .getElementById("btnConfirmCrop")
+        .addEventListener("click", () => {
+          if (!activeCropperInstance) return;
+
+          activeCropperInstance.getClippedCanvas
+            ? processCanvasOutput(activeCropperInstance.getClippedCanvas())
+            : processCanvasOutput(
+                activeCropperInstance.getCoveredCanvas
+                  ? activeCropperInstance.getSelectionCanvas()
+                  : activeCropperInstance.getCroppedCanvas(),
+              );
+        });
+
+      function processCanvasOutput(canvas) {
+        if (!canvas) {
+          bypassImageCropping();
+          return;
+        }
+
+        canvas.toBlob(
+          (blob) => {
+            const originalName = currentCropQueue[currentQueueIndex].name;
+            const transformedFile = new File([blob], originalName, {
+              type: "image/jpeg",
+            });
+            let variantMemory = addedFilesMemory.find(
+              (item) => item.variantBoxElement === activeTargetContainer,
+            );
+            variantMemory.files.push(transformedFile);
+
+            renderVariantThumbnails(activeTargetContainer, transformedFile);
+
+            closeAndAdvanceQueue();
+          },
+          "image/jpeg",
+          0.9,
+        );
+      }
+
+      document
+        .getElementById("btnSkipCrop")
+        .addEventListener("click", bypassImageCropping);
+
+      function bypassImageCropping() {
+        const rawFile = currentCropQueue[currentQueueIndex];
+        let variantMemory = addedFilesMemory.find(
+          (item) => item.variantBoxElement === activeTargetContainer,
+        );
+        variantMemory.files.push(rawFile);
+
+        renderVariantThumbnails(activeTargetContainer, rawFile);
+        closeAndAdvanceQueue();
+      }
+
+      function closeAndAdvanceQueue() {
+        currentQueueIndex++;
+        if (currentQueueIndex < currentCropQueue.length) {
+          launchCropperInterface();
+        } else {
+          const cropperModalEl = document.getElementById("cropperModal");
+          bootstrap.Modal.getInstance(cropperModalEl).hide();
+          if (activeCropperInstance) {
+            activeCropperInstance.destroy();
+            activeCropperInstance = null;
+          }
+        }
+      }
+
+      function renderVariantThumbnails(container, file) {
+        const thumbContainer = container.querySelector(".preview-thumbnails");
+        const mainPreview = container.querySelector(".main-preview-img");
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (
+            thumbContainer.children.length === 0 ||
+            mainPreview.src.includes("placeholder.com")
+          ) {
+            mainPreview.src = event.target.result;
+          }
+
+          const idMark = "img_" + Math.random().toString(36).substring(2, 9);
+          const wrapper = document.createElement("div");
+          wrapper.className = "thumb-wrapper";
+          wrapper.id = idMark;
+          wrapper.innerHTML = `
+            <img src="${event.target.result}">
+            <button class="remove-img" type="button" onclick="removeBlobMemoryImage(this, '${container.id}', '${file.name}')">×</button>
+          `;
+          thumbContainer.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function removeBlobMemoryImage(btn, containerId, filename) {
+        const box = document.getElementById(containerId);
+        let variantMemory = addedFilesMemory.find(
+          (item) => item.variantBoxElement === box,
+        );
+        if (variantMemory) {
+          const idx = variantMemory.files.findIndex((f) => f.name === filename);
+          if (idx !== -1) variantMemory.files.splice(idx, 1);
+        }
+
+        const wrapper = btn.parentElement;
+        const parentContainer = wrapper.parentElement;
+        wrapper.remove();
+        const remainingImg = parentContainer.querySelector("img");
+        const mainPreview = box.querySelector(".main-preview-img");
+        if (remainingImg) {
+          mainPreview.src = remainingImg.src;
+        } else {
+          mainPreview.src = "https://via.placeholder.com/150?text=No+Image";
+        }
+      }
 
       async function submitProduct() {
         try {
           const name = document.getElementById("name").value.trim();
-          const desc = description.value.trim();
+          const desc = document.getElementById("description").value.trim();
+          const catVal = document.getElementById("category").value;
+          const brandVal = document.getElementById("brand").value;
 
-          // Frontend Validation
-          if (!name) {
-            return showAlert("Product name is required", "danger");
-          }
-
-          if (!category.value) {
-            return showAlert("Please select a category", "danger");
-          }
-
-          if (!brand.value) {
-            return showAlert("Please select a brand", "danger");
-          }
-
-          if (!desc) {
-            return showAlert("Description is required", "danger");
-          }
+          if (!name) return showAlert("Product name is required", "danger");
+          if (!catVal) return showAlert("Please select a category", "danger");
+          if (!brandVal) return showAlert("Please select a brand", "danger");
+          if (!desc) return showAlert("Description is required", "danger");
 
           const variantBoxes = document.querySelectorAll(
             "#variantContainer .variant-box",
           );
-
-          if (variantBoxes.length === 0) {
+          if (variantBoxes.length === 0)
             return showAlert("Add at least one variant", "danger");
-          }
 
           const formData = new FormData();
-
           formData.append("name", name);
           formData.append("description", desc);
-          formData.append("category", category.value);
-          formData.append("brand", brand.value);
+          formData.append("category", catVal);
+          formData.append("brand", brandVal);
 
           let variants = [];
 
@@ -549,35 +759,28 @@
             const color = box.querySelector(".color").value;
             const price = box.querySelector(".price").value.trim();
             const stock = box.querySelector(".stock").value.trim();
-            const files = box.querySelector(".images").files;
 
-            // Variant validation
-            if (!price || price <= 0) {
+            if (!price || price <= 0)
               return showAlert("Enter valid variant price", "danger");
-            }
-
-            if (!stock || stock < 0) {
+            if (!stock || stock < 0)
               return showAlert("Enter valid stock quantity", "danger");
-            }
 
-            if (files.length === 0) {
+            let memoryRecord = addedFilesMemory.find(
+              (item) => item.variantBoxElement === box,
+            );
+            const variantFiles = memoryRecord ? memoryRecord.files : [];
+
+            if (variantFiles.length === 0) {
               return showAlert("Please upload variant images", "danger");
             }
 
             let images = [];
-
-            for (let i = 0; i < files.length; i++) {
-              formData.append("variantImages", files[i]);
+            for (let i = 0; i < variantFiles.length; i++) {
+              formData.append("variantImages", variantFiles[i]);
               images.push("temp");
             }
 
-            variants.push({
-              size,
-              color,
-              price,
-              stock,
-              images,
-            });
+            variants.push({size, color, price, stock, images});
           }
 
           formData.append("variants", JSON.stringify(variants));
@@ -588,20 +791,22 @@
           });
 
           const data = await res.json();
-
-          if (!res.ok) {
+          if (!res.ok)
             return showAlert(data.message || "Failed to add product", "danger");
-          }
 
           showAlert(data.message || "Product added successfully", "success");
-
           bootstrap.Modal.getInstance(
             document.getElementById("addModal"),
           ).hide();
 
+          addedFilesMemory = [];
+          document.getElementById("variantContainer").innerHTML = "";
+          document.getElementById("name").value = "";
+          document.getElementById("description").value = "";
+
           loadProducts();
         } catch (error) {
-          console.log(error);
+          console.error(error);
           showAlert("Something went wrong", "danger");
         }
       }
@@ -609,82 +814,106 @@
       async function openEdit(id) {
         const res = await fetch(`${API}/edit/${id}`);
         const p = await res.json();
-        editId.value = p._id;
-        editName.value = p.name;
-        editDescription.value = p.description;
+
+        document.getElementById("editId").value = p._id;
+        document.getElementById("editName").value = p.name;
+        document.getElementById("editDescription").value = p.description;
+
         await loadEditCategories(p.category?._id);
         await loadEditBrands(p.brand?._id);
+
+        const editVariantContainer = document.getElementById(
+          "editVariantContainer",
+        );
         editVariantContainer.innerHTML = "";
+
         p.variants.forEach((v) => {
           editVariantContainer.insertAdjacentHTML(
             "beforeend",
             getVariantHTML(v, true),
           );
         });
-        new bootstrap.Modal(editModal).show();
+
+        new bootstrap.Modal(document.getElementById("editModal")).show();
       }
 
       async function updateProduct() {
         const formData = new FormData();
-        formData.append("name", editName.value);
-        formData.append("description", editDescription.value);
-        formData.append("category", editCategory.value);
-        formData.append("brand", editBrand.value);
+        formData.append("name", document.getElementById("editName").value);
+        formData.append(
+          "description",
+          document.getElementById("editDescription").value,
+        );
+        formData.append(
+          "category",
+          document.getElementById("editCategory").value,
+        );
+        formData.append("brand", document.getElementById("editBrand").value);
 
         let variants = [];
-        document
-          .querySelectorAll("#editVariantContainer .variant-box")
-          .forEach((box) => {
-            let oldImages = [];
-            box
-              .querySelectorAll(".oldImage")
-              .forEach((img) => oldImages.push(img.value));
-            const files = box.querySelector(".images").files;
-            let images = [...oldImages];
-            for (let i = 0; i < files.length; i++) {
-              formData.append("variantImages", files[i]);
-              images.push("temp");
-            }
-            variants.push({
-              size: box.querySelector(".size").value,
-              color: box.querySelector(".color").value,
-              price: box.querySelector(".price").value,
-              stock: box.querySelector(".stock").value,
-              images,
-            });
+        const boxes = document.querySelectorAll(
+          "#editVariantContainer .variant-box",
+        );
+
+        for (const box of boxes) {
+          let oldImages = [];
+          box
+            .querySelectorAll(".oldImage")
+            .forEach((img) => oldImages.push(img.value));
+
+          let memoryRecord = addedFilesMemory.find(
+            (item) => item.variantBoxElement === box,
+          );
+          const variantFiles = memoryRecord ? memoryRecord.files : [];
+
+          let images = [...oldImages];
+          for (let i = 0; i < variantFiles.length; i++) {
+            formData.append("variantImages", variantFiles[i]);
+            images.push("temp");
+          }
+
+          variants.push({
+            size: box.querySelector(".size").value,
+            color: box.querySelector(".color").value,
+            price: box.querySelector(".price").value,
+            stock: box.querySelector(".stock").value,
+            images,
           });
+        }
+
         formData.append("variants", JSON.stringify(variants));
-        await fetch(`${API}/edit/${editId.value}`, {
+
+        await fetch(`${API}/edit/${document.getElementById("editId").value}`, {
           method: "PUT",
           body: formData,
         });
+
         location.reload();
       }
 
       async function viewImages(id) {
         const res = await fetch(`${API}/edit/${id}`);
         const p = await res.json();
-        imageContainer.innerHTML = p.variants
+        const container = document.getElementById("imageContainer");
+        container.innerHTML = p.variants
           .flatMap((v) => v.images)
           .map(
             (img) => `<img src="${img}" width="100" class="rounded shadow-sm">`,
           )
           .join("");
-        new bootstrap.Modal(viewModal).show();
+        new bootstrap.Modal(document.getElementById("viewModal")).show();
       }
 
       async function toggleProduct(id) {
         await fetch(`${API}/toggle/${id}`, {method: "PATCH"});
         const currentQuery = document.getElementById("searchInput").value;
-        loadProducts(currentQuery);
+        loadProducts(currentQuery, currentPage);
       }
 
       async function loadCategories() {
         const res = await fetch(CATEGORY_API);
         const data = await res.json();
-
         const categorySelect = document.getElementById("category");
-
         categorySelect.innerHTML = data.categories
           .map((c) => `<option value="${c._id}">${c.name}</option>`)
           .join("");
@@ -693,40 +922,32 @@
       async function loadBrands() {
         const res = await fetch(BRAND_API);
         const data = await res.json();
-
         const brandSelect = document.getElementById("brand");
-
         brandSelect.innerHTML = data
           .map((b) => `<option value="${b._id}">${b.name}</option>`)
           .join("");
       }
+
       async function loadEditCategories(selected) {
         const res = await fetch(CATEGORY_API);
         const data = await res.json();
-
         const editCategorySelect = document.getElementById("editCategory");
-
         editCategorySelect.innerHTML = data.categories
           .map(
             (c) =>
-              `<option value="${c._id}" ${
-                c._id === selected ? "selected" : ""
-              }>${c.name}</option>`,
+              `<option value="${c._id}" ${c._id === selected ? "selected" : ""}>${c.name}</option>`,
           )
           .join("");
       }
+
       async function loadEditBrands(selected) {
         const res = await fetch(BRAND_API);
         const data = await res.json();
-
         const editBrandSelect = document.getElementById("editBrand");
-
         editBrandSelect.innerHTML = data
           .map(
             (b) =>
-              `<option value="${b._id}" ${
-                b._id === selected ? "selected" : ""
-              }>${b.name}</option>`,
+              `<option value="${b._id}" ${b._id === selected ? "selected" : ""}>${b.name}</option>`,
           )
           .join("");
       }
@@ -736,5 +957,6 @@
       loadBrands();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   </body>
 </html>

@@ -6,6 +6,7 @@ const User = require("./models/userModel");
 const auth = require("./middleware/authMiddleware");
 
 const userProductController = require("./controllers/userProductController");
+const path = require("path");
 
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
@@ -19,7 +20,11 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  "/cropper",
+  express.static(path.join(__dirname, "node_modules/cropperjs/dist")),
+);
 
 app.set("view engine", "ejs");
 

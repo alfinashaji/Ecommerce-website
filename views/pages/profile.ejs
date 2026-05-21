@@ -7,7 +7,8 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <style>
     body{
       background:#f3f3f3;
@@ -455,6 +456,8 @@
 
   <%- include("../partials/footer") %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/cropper.js"></script>
+
 <script>
 
 const profileForm = document.getElementById("profileForm");
@@ -481,7 +484,6 @@ const previewImg = document.getElementById("previewImg");
 const applyBtn = document.getElementById("applyBtn");
 const profileImg = document.getElementById("profileImg");
 
-
 const bootstrapSuccessModal = new bootstrap.Modal(document.getElementById('successModal'));
 
 function showSuccessModal(msg) {
@@ -489,9 +491,9 @@ function showSuccessModal(msg) {
   bootstrapSuccessModal.show();
 }
 
-
 function togglePassword(icon) {
   const input = icon.parentElement.querySelector("input");
+
   if (input.type === "password") {
     input.type = "text";
     icon.classList.remove("fa-eye-slash");
@@ -502,7 +504,6 @@ function togglePassword(icon) {
     icon.classList.add("fa-eye-slash");
   }
 }
-
 
 const fullNameInput = document.querySelector('input[name="fullName"]');
 
@@ -522,50 +523,30 @@ function closeModal() {
   previewImg.style.display = "none";
   previewImg.src = "";
   fileInput.value = "";
+
+  destroyCropper();
 }
 
-// ================================
-// IMAGE VALIDATION
-// ================================
-fileInput.addEventListener("change", () => {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
-
-  if (!allowedTypes.includes(file.type)) {
-    alert("Only JPG, PNG and WEBP images are allowed");
-    fileInput.value = "";
-    return;
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    alert("Image size must be below 2MB");
-    fileInput.value = "";
-    return;
-  }
-
-  previewImg.src = URL.createObjectURL(file);
-  previewImg.style.display = "block";
+initCropper({
+  input: fileInput,
+  preview: previewImg,
+  aspectRatio: 1,
 });
 
-// Upload image
 applyBtn.addEventListener("click", async () => {
-  const file = fileInput.files[0];
 
-  if (!file) {
-    alert("Please select a file");
+  const croppedFile = await getCroppedFile();
+
+  if (!croppedFile) {
+    alert("Please select an image");
     return;
   }
 
   const formData = new FormData();
-  formData.append("profileImage", file); 
+  formData.append("profileImage", croppedFile);
 
   try {
+
     const res = await fetch("/profile/upload-photo", {
       method: "POST",
       body: formData
@@ -574,34 +555,44 @@ applyBtn.addEventListener("click", async () => {
     const result = await res.json();
 
     if (res.ok) {
+
       showSuccessModal(result.message);
+
       if (profileImg) {
         profileImg.src = result.image;
       }
+
       closeModal();
+
     } else {
+
       message.innerText = result.message;
       message.style.color = "red";
+
     }
+
   } catch (err) {
+
     console.log(err);
+
     message.innerText = "Upload failed";
     message.style.color = "red";
   }
 });
 
-// ================================
-// OTP INPUT VALIDATION
-// ================================
 document.querySelectorAll(".otp-input").forEach((input, i, arr) => {
+
   input.addEventListener("input", () => {
+
     input.value = input.value.replace(/[^0-9]/g, "");
+
     if (input.value && arr[i + 1]) {
       arr[i + 1].focus();
     }
   });
 
   input.addEventListener("keydown", (e) => {
+
     if (
       e.key === "Backspace" &&
       !input.value &&
@@ -622,25 +613,34 @@ function getOtp(containerId) {
 let emailTimer;
 
 function startEmailTimer(duration = 90) {
+
   const countdown = document.getElementById("emailCountdown");
+
   if (!countdown) return;
 
   let time = Number(duration);
+
   if (isNaN(time)) time = 90;
 
   resendEmailOtpBtn.disabled = true;
+
   clearInterval(emailTimer);
+
   countdown.innerText = time;
 
   emailTimer = setInterval(() => {
+
     time = Number(time) - 1;
+
     if (isNaN(time)) time = 0;
+
     countdown.innerText = time > 0 ? time : 0;
 
     if (time <= 0) {
       clearInterval(emailTimer);
       resendEmailOtpBtn.disabled = false;
     }
+
   }, 1000);
 }
 
@@ -648,31 +648,42 @@ function startEmailTimer(duration = 90) {
 let forgotTimer;
 
 function startForgotTimer(duration = 90) {
+
   const countdown = document.getElementById("forgotCountdown");
+
   if (!countdown) return;
 
   let time = Number(duration);
+
   if (isNaN(time)) time = 90;
 
   resendForgotOtpBtn.disabled = true;
+
   clearInterval(forgotTimer);
+
   countdown.innerText = time;
 
   forgotTimer = setInterval(() => {
+
     time = Number(time) - 1;
+
     if (isNaN(time)) time = 0;
+
     countdown.innerText = time > 0 ? time : 0;
 
     if (time <= 0) {
       clearInterval(forgotTimer);
       resendForgotOtpBtn.disabled = false;
     }
+
   }, 1000);
 }
 
-// Profile from validation
+// Profile form validation
 profileForm?.addEventListener("submit", async (e) => {
+
   e.preventDefault();
+
   message.innerText = "";
 
   const fullName = profileForm.fullName.value.trim();
@@ -708,6 +719,7 @@ profileForm?.addEventListener("submit", async (e) => {
   const data = Object.fromEntries(new FormData(profileForm));
 
   try {
+
     const res = await fetch("/profile", {
       method: "PATCH",
       headers: {
@@ -719,18 +731,25 @@ profileForm?.addEventListener("submit", async (e) => {
     const result = await res.json();
 
     if (res.ok) {
+
       showSuccessModal(result.message);
+
       if (result.requireOtp) {
         emailOtpSection.style.display = "block";
         startEmailTimer(result.expiry);
       }
+
     } else {
+
       message.innerText = result.message;
       message.style.color = "red";
+
     }
 
   } catch (err) {
+
     console.log(err);
+
     message.innerText = "Something went wrong";
     message.style.color = "red";
   }
@@ -738,22 +757,31 @@ profileForm?.addEventListener("submit", async (e) => {
 
 // Verify email otp
 verifyEmailOtpBtn?.addEventListener("click", async () => {
+
   const otp = getOtp("otpBoxes");
+
   message.innerText = "";
 
   const res = await fetch("/profile/verify-email-otp", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ otp })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({otp})
   });
 
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     emailOtpSection.style.display = "none";
+
     clearInterval(emailTimer);
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
@@ -761,7 +789,9 @@ verifyEmailOtpBtn?.addEventListener("click", async () => {
 
 // Resend email otp
 resendEmailOtpBtn?.addEventListener("click", async () => {
+
   message.innerText = "";
+
   const res = await fetch("/profile/resend-email-otp", {
     method: "POST"
   });
@@ -769,11 +799,15 @@ resendEmailOtpBtn?.addEventListener("click", async () => {
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     if (result.expiry) {
       startEmailTimer(result.expiry);
     }
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
@@ -781,7 +815,9 @@ resendEmailOtpBtn?.addEventListener("click", async () => {
 
 // password Validation
 passwordForm?.addEventListener("submit", async (e) => {
+
   e.preventDefault();
+
   message.innerText = "";
 
   const currentPassword = passwordForm.querySelector('input[name="currentPassword"]');
@@ -792,12 +828,12 @@ passwordForm?.addEventListener("submit", async (e) => {
   const newPasswordError = newPassword.parentElement.querySelector(".error-message");
   const confirmPasswordError = confirmPassword.parentElement.querySelector(".error-message");
 
-  // clear previous errors
   currentPasswordError.innerText = "";
   newPasswordError.innerText = "";
   confirmPasswordError.innerText = "";
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
   let hasError = false;
 
   if (!currentPassword.value.trim()) {
@@ -824,6 +860,7 @@ passwordForm?.addEventListener("submit", async (e) => {
   if (hasError) return;
 
   try {
+
     const res = await fetch("/profile/change-password", {
       method: "PATCH",
       headers: {
@@ -839,6 +876,7 @@ passwordForm?.addEventListener("submit", async (e) => {
     const result = await res.json();
 
     if (!res.ok) {
+
       if (result.message === "Incorrect current password") {
         currentPasswordError.innerText = result.message;
       } else if (result.message.includes("same")) {
@@ -846,14 +884,18 @@ passwordForm?.addEventListener("submit", async (e) => {
       } else {
         confirmPasswordError.innerText = result.message;
       }
+
       return;
     }
 
     showSuccessModal(result.message);
+
     passwordForm.reset();
 
   } catch (err) {
+
     console.log(err);
+
     message.innerText = "Something went wrong";
     message.style.color = "red";
   }
@@ -861,7 +903,9 @@ passwordForm?.addEventListener("submit", async (e) => {
 
 // forgot password
 forgotBtn?.addEventListener("click", async () => {
+
   message.innerText = "";
+
   const res = await fetch("/profile/forgot-password", {
     method: "POST"
   });
@@ -869,12 +913,17 @@ forgotBtn?.addEventListener("click", async () => {
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     forgotOtpSection.style.display = "block";
+
     if (result.expiry) {
       startForgotTimer(result.expiry);
     }
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
@@ -882,22 +931,31 @@ forgotBtn?.addEventListener("click", async () => {
 
 // Verify forgot otp
 verifyForgotOtpBtn?.addEventListener("click", async () => {
+
   const otp = getOtp("forgotOtpBoxes");
+
   message.innerText = "";
 
   const res = await fetch("/profile/verify-forgot-otp", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ otp })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({otp})
   });
 
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     forgotOtpSection.style.display = "none";
+
     resetSection.style.display = "block";
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
@@ -905,7 +963,9 @@ verifyForgotOtpBtn?.addEventListener("click", async () => {
 
 //Resend forgot otp
 resendForgotOtpBtn?.addEventListener("click", async () => {
+
   message.innerText = "";
+
   const res = await fetch("/profile/forgot-password", {
     method: "POST"
   });
@@ -913,11 +973,15 @@ resendForgotOtpBtn?.addEventListener("click", async () => {
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     if (result.expiry) {
       startForgotTimer(result.expiry);
     }
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
@@ -925,12 +989,16 @@ resendForgotOtpBtn?.addEventListener("click", async () => {
 
 // Reset password
 resetBtn?.addEventListener("click", async () => {
+
   const otp = getOtp("forgotOtpBoxes");
+
   message.innerText = "";
 
   const res = await fetch("/profile/reset-password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({
       otp,
       newPassword: newPass.value,
@@ -941,16 +1009,21 @@ resetBtn?.addEventListener("click", async () => {
   const result = await res.json();
 
   if (res.ok) {
+
     showSuccessModal(result.message);
+
     resetSection.style.display = "none";
     forgotOtpSection.style.display = "none";
+
     clearInterval(forgotTimer);
+
   } else {
+
     message.innerText = result.message;
     message.style.color = "red";
   }
 });
-</script>
 
+</script>
 </body>
 </html>

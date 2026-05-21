@@ -1,4 +1,4 @@
-const categoryOfferService = require("../services/addressService"); // Adjust paths based on your setup
+const categoryOfferService = require("../services/addressService");
 const offerService = require("../services/categoryOfferService");
 
 // get categories

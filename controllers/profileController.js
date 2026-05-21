@@ -1,4 +1,4 @@
-const User = require("../models/userModel"); // Kept if other raw validations require lookups
+const User = require("../models/userModel");
 const profileService = require("../services/profileService");
 
 const strongPasswordRegex =
