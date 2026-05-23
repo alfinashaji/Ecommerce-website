@@ -16,7 +16,6 @@ exports.getPaginatedProducts = async (queryParams) => {
   if (search && search.trim() !== "") {
     const regex = new RegExp(search.trim(), "i");
 
-    // Query matched categories and brands to capture relational IDs
     const [categories, brands] = await Promise.all([
       Category.find({name: {$regex: regex}}),
       Brand.find({name: {$regex: regex}}),

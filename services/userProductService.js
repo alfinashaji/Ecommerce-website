@@ -36,7 +36,9 @@ exports.getFilteredUserProducts = async (queryParams) => {
 
   if (category) filter.category = category;
   if (brand) filter.brand = brand;
-  if (size) filter["variants.size"] = size;
+  if (size) {
+    filter["variants.size"] = size.toUpperCase();
+  }
 
   if (search) {
     const regexQuery = {$regex: search, $options: "i"};

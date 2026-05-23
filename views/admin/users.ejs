@@ -183,18 +183,14 @@ async function toggleStatus(userId) {
     const result = await res.json();
 
     alert(result.message);
-
-    // update UI without reload
     const btn = document.getElementById(`btn-${userId}`);
     const status = document.getElementById(`status-${userId}`);
 
     if (result.status === "blocked") {
 
-      // update badge
       status.innerText = "blocked";
       status.className = "badge bg-danger";
 
-      // update button
       btn.innerText = "Unblock";
       btn.className = "btn btn-sm btn-success";
 

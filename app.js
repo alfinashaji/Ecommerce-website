@@ -74,6 +74,7 @@ const productRoutes = require("./routes/productRoutes");
 const userProductRoutes = require("./routes/userProductRoutes");
 const categoryOfferRoutes = require("./routes/categoryOfferRoutes");
 const searchRoutes = require("./routes/searchRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 
 app.use("/api/auth", authRoutes);
 
@@ -98,6 +99,9 @@ app.use("/products", userProductRoutes);
 app.use("/search", searchRoutes);
 
 app.get("/home", userProductController.getHomePage);
+
+// Wishlist
+app.use("/wishlist", wishlistRoutes);
 
 app.get("/", (req, res) => res.redirect("/home"));
 
