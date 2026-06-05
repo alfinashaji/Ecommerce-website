@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<%- include("../partials/navbar") %>
+
+<div class="container py-5">
+
+    <!-- Header -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>Order Details</h2>
+
+            <p class="mb-0">
+                Order ID:
+                <strong><%= order.orderId %></strong>
+            </p>
+
+            <small class="text-muted">
+                Ordered on
+                <%= new Date(order.createdAt).toLocaleDateString() %>
+            </small>
+        </div>
+
+        <div>
+            <a
+                href="/orders/<%= order._id %>/invoice"
+                class="btn btn-outline-dark"
+            >
+                Download Invoice
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Order Summary -->
+
+    <div class="card mb-4">
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <h6>Order Status</h6>
+
+                    <span class="badge bg-success">
+                        <%= order.orderStatus %>
+                    </span>
+                </div>
+
+                <div class="col-md-4">
+                    <h6>Payment Method</h6>
+
+                    <p><%= order.paymentMethod %></p>
+                </div>
+
+                <div class="col-md-4">
+                    <h6>Payment Status</h6>
+
+                    <span class="badge bg-warning text-dark">
+                        <%= order.paymentStatus %>
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Address -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            Delivery Address
+        </div>
+
+        <div class="card-body">
+
+            <strong><%= order.address.name %></strong>
+
+            <p class="mb-1">
+                <%= order.address.street %>
+            </p>
+
+            <p class="mb-1">
+                <%= order.address.city %>,
+                <%= order.address.state %>
+            </p>
+
+            <p class="mb-1">
+                <%= order.address.pincode %>
+            </p>
+
+            <p>
+                <%= order.address.phone %>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Products -->
+
+    <div class="card">
+
+        <div class="card-header">
+            Ordered Products
+        </div>
+
+        <div class="card-body">
+
+            <% order.products.forEach(item => { %>
+
+            <div class="row border-bottom py-3 align-items-center">
+
+                <div class="col-md-4">
+
+                    <h6>
+                        <%= item.productName %>
+                    </h6>
+
+                    <small>
+                        Size: <%= item.size %>
+                    </small>
+
+                    <br>
+
+                    <small>
+                        Color: <%= item.color %>
+                    </small>
+
+                </div>
+
+                <div class="col-md-2">
+                    Qty: <%= item.quantity %>
+                </div>
+
+                <div class="col-md-2">
+                    ₹<%= item.finalPrice %>
+                </div>
+
+                <div class="col-md-4">
+
+                    <% if(item.status === "Placed"){ %>
+
+                        <span class="badge bg-secondary">
+                            Placed
+                        </span>
+
+                    <% } else if(item.status === "Processing"){ %>
+
+                        <span class="badge bg-warning text-dark">
+                            Processing
+                        </span>
+
+                    <% } else if(item.status === "Shipped"){ %>
+
+                        <span class="badge bg-info">
+                            Shipped
+                        </span>
+
+                    <% } else if(item.status === "Out For Delivery"){ %>
+
+                        <span class="badge bg-primary">
+                            Out For Delivery
+                        </span>
+
+                    <% } else if(item.status === "Delivered"){ %>
+
+                        <span class="badge bg-success">
+                            Delivered
+                        </span>
+
+                    <% } else if(item.status === "Cancelled"){ %>
+
+                        <span class="badge bg-danger">
+                            Cancelled
+                        </span>
+
+                    <% } else if(item.status === "Return Requested"){ %>
+
+                        <span class="badge bg-warning text-dark">
+                            Return Requested
+                        </span>
+
+                    <% } else if(item.status === "Returned"){ %>
+
+                        <span class="badge bg-success">
+                            Returned
+                        </span>
+
+                    <% } %>
+
+                    <% if(item.returnReason){ %>
+
+                        <div class="mt-2">
+                            <small class="text-danger">
+                                Return Reason:
+                                <%= item.returnReason %>
+                            </small>
+                        </div>
+
+                    <% } %>
+
+                    <% if(item.cancelReason){ %>
+
+                        <div class="mt-2">
+                            <small class="text-danger">
+                                Cancel Reason:
+                                <%= item.cancelReason %>
+                            </small>
+                        </div>
+
+                    <% } %>
+
+                </div>
+
+            </div>
+
+            <% }) %>
+
+        </div>
+
+    </div>
+
+    <!-- Cancel Order -->
+
+    <% if(order.orderStatus === "Placed" || order.orderStatus === "Processing"){ %>
+
+    <div class="card mt-4">
+
+        <div class="card-body">
+
+            <h5 class="mb-3">
+                Cancel Entire Order
+            </h5>
+
+            <form
+                action="/orders/<%= order._id %>/cancel"
+                method="POST"
+            >
+
+                <textarea
+                    name="reason"
+                    class="form-control mb-3"
+                    placeholder="Reason (optional)"
+                ></textarea>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger"
+                >
+                    Cancel Order
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <% } %>
+
+    <!-- Price Summary -->
+
+    <div class="card mt-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+                <span>Subtotal</span>
+                <span>₹<%= order.subtotal %></span>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <span>Shipping</span>
+                <span>₹<%= order.shipping %></span>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+
+                <strong>Total Amount</strong>
+
+                <strong>
+                    ₹<%= order.totalAmount %>
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

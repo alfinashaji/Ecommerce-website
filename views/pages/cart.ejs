@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Bag</title>
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" 
+    rel="stylesheet"
+  />
+  <link 
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+    rel="stylesheet"
+  />
+
+  <style>
+    .btn-outline-secondary {
+      border-color: #dee2e6;
+      color: #000;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #f8f9fa;
+      color: #000;
+      border-color: #dee2e6;
+    }
+    .form-check-input:checked {
+      background-color: #000;
+      border-color: #000;
+    }
+    .color-box {
+      width: 24px;
+      height: 24px;
+      background-color: #212529; 
+      display: inline-block;
+    }
+    .wishlist-btn {
+      background: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      transition: 0.3s;
+    }
+  </style>
+</head>
+
+<body class="bg-white">
+
+<%- include("../partials/navbar") %>
+
+<div class="container py-5" style="max-width: 1200px;">
+
+  <h1 class="text-uppercase fw-normal tracking-wide mb-5 fs-2">Shopping Bag</h1>
+
+<% if (cart?.items?.length > 0) { %>
+    <div class="row g-5">
+      
+      <div class="col-lg-8">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+          
+          <% cart.items.forEach(item => { %>
+            <div class="col">
+              <div class="d-flex position-relative align-items-start gap-3">
+                
+                <div class="w-100">
+                  <div class="bg-light mb-3 overflow-hidden" style="aspect-ratio: 3/4;">
+                    <%
+                      const variant = item.product.variants.find(
+                        v => v.size === item.size && v.color === item.color
+                      );
+                    %>
+                    <img
+                      src="<%= variant?.images?.[0] %>"
+                      class="w-100 h-100 object-fit-cover"
+                      alt="<%= item.product.name %>"
+                    >
+                  </div>
+                  
+                  <div class="d-flex justify-content-between align-items-start mt-2">
+                    <div>
+                      <h5 class="fw-bold fs-6 mb-1"><%= item.product.name %></h5>
+                      <p class="text-muted small mb-1">Full Sleeve Zipper</p>
+                      
+                      <div class="d-flex align-items-center flex-wrap gap-1 mt-1">
+                        <% if (variant && variant.finalPrice < variant.price) { %>
+                          <span class="fw-bold text-dark fs-6">
+                            Key: ₹<%= Number(variant.finalPrice).toFixed(2) %>
+                          </span>
+                          <span class="text-muted text-decoration-line-through small ms-1">
+                            ₹<%= variant.price %>
+                          </span>
+                          <span class="text-danger small ms-1 fw-medium">
+                            (-<%= Math.round(((variant.price - variant.finalPrice) / variant.price) * 100) %>%)
+                          </span>
+                        <% } else if (variant) { %>
+                          <span class="fw-bold text-dark fs-6">
+                            Key: ₹<%= Number(variant.price).toFixed(2) %>
+                          </span>
+                        <% } %>
+                      </div>
+                    </div>
+
+                    <button class="wishlist-btn" onclick="event.preventDefault(); toggleWishlist(this, '<%= item.product._id %>')">
+                      <i class="fa-regular fa-heart"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-column align-items-center justify-content-between py-1 text-center" style="min-width: 40px; min-height: 280px;">
+                  
+                  <button class="btn p-0 border-0 fs-4 text-muted" onclick="removeCartItem('<%= item._id %>')">
+                    <i class="bi bi-x"></i>
+                  </button>
+                  
+                  <span class="fw-bold small my-2"><%= item.size %></span>
+                  
+                  <div class="d-flex flex-column align-items-center border border-secondary-subtle rounded-0 overflow-hidden mb-2">
+                    <button class="btn btn-sm btn-light rounded-0 border-0 px-2 py-1" onclick="updateQuantity('<%= item._id %>', 'increase')">
+                      <i class="bi bi-plus-lg text-dark fs-7"></i>
+                    </button>
+                    <span class="px-2 py-1 small fw-semibold bg-white text-dark"><%= item.quantity %></span>
+                    <button class="btn btn-sm btn-light rounded-0 border-0 px-2 py-1" onclick="updateQuantity('<%= item._id %>', 'decrease')">
+                      <i class="bi bi-dash-lg text-dark fs-7"></i>
+                    </button>
+                  </div>
+
+                  <button class="btn p-0 border-0 text-muted fs-5" onclick="window.location.reload();">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          <% }) %>
+
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="border p-4 sticky-top" style="top: 2rem; background-color: #fff;">
+          <h2 class="text-uppercase fs-6 fw-bold tracking-wider mb-4 mt-2">Order Summary</h2>
+          
+          <div class="d-flex justify-content-between mb-3 text-secondary">
+            <span>Subtotal</span>
+            <span class="text-dark fw-medium">₹<%= Number(subtotal).toFixed(2) %></span>
+          </div>
+          
+          <div class="d-flex justify-content-between mb-4 text-secondary pb-3 border-bottom">
+            <span>Shipping</span>
+            <span class="text-dark small">Free Delivery</span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="text-uppercase fw-normal tracking-wide">Total</span>
+            <span class="fs-4 fw-normal">₹<%= Number(total).toFixed(2) %></span>
+          </div>
+
+          <div class="form-check mb-4 mt-2">
+            <input class="form-check-input rounded-0 border-secondary" type="checkbox" id="termsCheck">
+            <label class="form-check-label text-muted small user-select-none" style="font-size: 0.8rem;" for="termsCheck">
+              I agree to the Terms and Conditions
+            </label>
+          </div>
+
+          <button
+  class="btn btn-light w-100 rounded-0 text-uppercase tracking-wider fw-bold py-3 fs-7"
+  style="background-color: #dcdcdc; color: #000;"
+  type="button"
+  onclick="goToCheckout()"
+>
+  Continue
+</button>
+        </div>
+      </div>
+
+    </div>
+  <% } else { %>
+
+<div class="text-center py-5 my-5">
+
+  <div class="mb-4">
+    <i class="bi bi-bag-x" style="font-size: 70px; color: #c7c7c7;"></i>
+  </div>
+
+  <h3 class="fw-light mb-2">Your shopping bag is empty</h3>
+
+  <p class="text-muted mb-4">
+    Looks like you haven't added anything to your cart yet.
+  </p>
+
+  <a href="/products" class="btn btn-dark px-4 py-2 rounded-0">
+    Continue Shopping
+  </a>
+
+</div>
+
+<% } %>
+
+</div>
+
+<%- include("../partials/footer") %>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  async function toggleWishlist(button, productId) {
+    try {
+      const res = await fetch(`/wishlist/toggle/${productId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+      const icon = button.querySelector("i");
+
+      if (data.added) {
+        icon.classList.remove("fa-regular");
+        icon.classList.add("fa-solid");
+      } else {
+        icon.classList.remove("fa-solid");
+        icon.classList.add("fa-regular");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Wishlist sync failed");
+    }
+  }
+
+  async function updateQuantity(itemId, action) {
+    try {
+      const res = await fetch(`/cart/quantity/${itemId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function removeCartItem(itemId) {
+    try {
+      const res = await fetch(`/cart/remove/${itemId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  function goToCheckout() {
+    const termsChecked = document.getElementById("termsCheck").checked;
+
+    if (!termsChecked) {
+      alert("Please accept the Terms and Conditions");
+      return;
+    }
+
+    window.location.href = "/checkout";
+  }
+
+</script>
+</body>
+</html>

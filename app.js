@@ -75,6 +75,8 @@ const userProductRoutes = require("./routes/userProductRoutes");
 const categoryOfferRoutes = require("./routes/categoryOfferRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 app.use("/api/auth", authRoutes);
 
@@ -102,6 +104,13 @@ app.get("/home", userProductController.getHomePage);
 
 // Wishlist
 app.use("/wishlist", wishlistRoutes);
+
+// Cart
+app.use("/cart", cartRoutes);
+
+// Order
+
+app.use("/", orderRoutes);
 
 app.get("/", (req, res) => res.redirect("/home"));
 

@@ -301,6 +301,13 @@
               <button id="buyNowBtn" class="btn btn-action btn-buy" onclick="buyNow()">
                 Buy Now
               </button>
+             <button
+  class="btn btn-action"
+  style="background:#fff;border:1px solid #ddd;"
+  onclick="toggleWishlist()"
+>
+ Add to Wishlist
+</button>
             </div>
           </div>
         </div>
@@ -480,10 +487,81 @@ if (v.finalPrice < v.price) {
         setupZoom();
       }
 
-      function addToCart() { console.log("Adding to cart:", variants[selectedVariantIndex]); }
-      function buyNow() { console.log("Buying now:", variants[selectedVariantIndex]); }
+     async function addToCart() {
+  const variant = variants[selectedVariantIndex];
+
+  try {
+    const res = await fetch(`/cart/add/<%= product._id %>`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        size: variant.size,
+        color: variant.color,
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Product added to cart");
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+      async function buyNow() {
+  const variant = variants[selectedVariantIndex];
+
+  try {
+    const res = await fetch(`/cart/add/<%= product._id %>`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        size: variant.size,
+        color: variant.color,
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      window.location.href = "/cart";
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
 
       window.onload = init;
+
+      async function toggleWishlist() {
+  try {
+    const res = await fetch(`/wishlist/toggle/<%= product._id %>`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await res.json();
+
+    if (data.added) {
+      alert("Added to wishlist");
+    } else {
+      alert("Removed from wishlist");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
     </script>
   </body>
 </html>

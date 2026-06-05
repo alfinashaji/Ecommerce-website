@@ -7,8 +7,13 @@ const {
   getUsers,
   toggleUserStatus,
   adminLogin,
+  getOrders,
+  getOrderDetails,
+  approveReturn,
+  updateOrderStatus,
 } = require("../controllers/adminController");
 const Category = require("../models/categoryModel");
+const inventoryController = require("../controllers/inventoryController");
 
 // Dashboard
 router.get("/dashboard", adminAuth, getDashboard);
@@ -66,4 +71,21 @@ router.post("/logout", (req, res) => {
     res.redirect("/admin/login");
   });
 });
+
+router.get("/orders", adminAuth, getOrders);
+router.get("/orders/:id", adminAuth, getOrderDetails);
+router.post("/orders/:id/status", adminAuth, updateOrderStatus);
+router.post(
+  "/orders/:orderId/product/:productId/approve-return",
+  adminAuth,
+  approveReturn,
+);
+
+router.get("/inventory", adminAuth, inventoryController.getInventoryPage);
+router.post(
+  "/inventory/update/:productId/:variantId",
+  adminAuth,
+  inventoryController.updateVariantStock,
+);
+
 module.exports = router;

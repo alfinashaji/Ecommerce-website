@@ -33,7 +33,7 @@ exports.getEditAddress = async (req, res) => {
   }
 };
 
-// read single address (API)
+// read single address
 exports.getSingleAddress = async (req, res) => {
   try {
     const address = await addressService.getAddressById(req.params.id);

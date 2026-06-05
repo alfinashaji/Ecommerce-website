@@ -10,7 +10,6 @@ function clearFieldErrors() {
   });
 }
 
-// ===== GLOBAL ERROR (for login/server) =====
 function showError(message) {
   const errorBox = document.getElementById("errorBox");
   if (!errorBox) return;
@@ -26,7 +25,6 @@ function hideError() {
   }
 }
 
-// ===== VALIDATORS =====
 function isValidEmail(email) {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return regex.test(email);
@@ -39,7 +37,6 @@ function isValidPassword(password) {
   return regex.test(password);
 }
 
-// ===== SIGNUP VALIDATION =====
 function setupSignupValidation() {
   const form = document.getElementById("signupForm");
   if (!form) return;
@@ -48,7 +45,6 @@ function setupSignupValidation() {
   const emailInput = form.email;
   const passwordInput = form.password;
 
-  // 🔥 REAL-TIME CLEARING
   fullNameInput.addEventListener("input", () => {
     setFieldError("fullNameError", "");
   });
@@ -93,7 +89,6 @@ function setupSignupValidation() {
   };
 }
 
-// ===== LOGIN VALIDATION =====
 function setupLoginValidation() {
   const form = document.getElementById("loginForm");
   if (!form) return;
@@ -143,7 +138,6 @@ function setupLoginValidation() {
 
 document.addEventListener("DOMContentLoaded", setupLoginValidation);
 
-// ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
   const page = document.body.dataset.page;
 

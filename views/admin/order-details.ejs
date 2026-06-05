@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Details</title>
+
+<link
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+rel="stylesheet"
+/>
+
+<style>
+body{
+    background:#f8f9fa;
+}
+
+.card{
+    border:none;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.product-img{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+.badge-status{
+    font-size:14px;
+    padding:8px 14px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2>Order Details</h2>
+
+        <a href="/admin/orders" class="btn btn-secondary">
+            Back
+        </a>
+
+    </div>
+
+    <!-- Order Info -->
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+                    <h6>Order ID</h6>
+                    <p><%= order.orderId %></p>
+                </div>
+
+                <div class="col-md-4">
+                    <h6>Order Date</h6>
+                    <p>
+                        <%= new Date(order.createdAt).toLocaleDateString() %>
+                    </p>
+                </div>
+
+                <div class="col-md-4">
+                    <h6>Status</h6>
+
+                    <span class="badge bg-primary badge-status">
+                        <%= order.orderStatus %>
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Customer -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            Customer Information
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Name:</strong>
+                <%= order.user?.name %>
+            </p>
+
+            <p>
+                <strong>Email:</strong>
+                <%= order.user?.email %>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Address -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            Delivery Address
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong><%= order.address.name %></strong>
+            </p>
+
+            <p>
+                <%= order.address.street %>
+            </p>
+
+            <p>
+                <%= order.address.city %>,
+                <%= order.address.state %>
+            </p>
+
+            <p>
+                <%= order.address.pincode %>
+            </p>
+
+            <p>
+                <%= order.address.phone %>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Products -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            Ordered Products
+        </div>
+
+        <div class="card-body">
+
+            <% order.products.forEach(item => { %>
+
+            <div class="row border-bottom py-3 align-items-center">
+
+                <div class="col-md-2">
+
+                    <img
+                    src="<%= item.productImage %>"
+                    class="product-img"
+                    alt=""
+                    >
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <h6><%= item.productName %></h6>
+
+                    <small>
+                        Size: <%= item.size %>
+                    </small>
+
+                    <br>
+
+                    <small>
+                        Color: <%= item.color %>
+                    </small>
+
+                </div>
+
+                <div class="col-md-2">
+                    Qty: <%= item.quantity %>
+                </div>
+
+                <div class="col-md-2">
+                    ₹<%= item.finalPrice %>
+                </div>
+
+                <div class="col-md-2">
+
+                    <span class="badge bg-info">
+                        <%= item.status %>
+                    </span>
+
+                </div>
+
+            </div>
+
+            <% if(!item.returnStatus) { %>
+
+<!-- No return request -->
+<small class="text-muted">No return request</small>
+
+<% } else if(item.returnStatus === "requested") { %>
+
+<form action="/admin/orders/<%= order._id %>/product/<%= item._id %>/approve-return" method="POST">
+    <button class="btn btn-success btn-sm">Approve Return</button>
+</form>
+
+<% } else if(item.returnStatus === "approved") { %>
+
+<span class="badge bg-success">Return Approved</span>
+
+<% } else if(item.returnStatus === "rejected") { %>
+
+<span class="badge bg-danger">Return Rejected</span>
+
+<% } %>
+
+
+            <% }) %>
+
+        </div>
+
+    </div>
+
+    <!-- Payment -->
+
+    <div class="card mb-4">
+
+        <div class="card-header">
+            Payment Information
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Method:</strong>
+                <%= order.paymentMethod %>
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+                <%= order.paymentStatus %>
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Total -->
+
+    <div class="card">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between">
+                <span>Subtotal</span>
+                <span>₹<%= order.subtotal %></span>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <span>Shipping</span>
+                <span>₹<%= order.shipping %></span>
+            </div>
+
+            <hr>
+
+            <div class="d-flex justify-content-between">
+
+                <strong>Total Amount</strong>
+
+                <strong>
+                    ₹<%= order.totalAmount %>
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

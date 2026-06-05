@@ -1,0 +1,11 @@
+<button
+  type="button"
+  class="wishlist-btn"
+  onclick="
+    event.stopPropagation();
+    event.preventDefault();
+    toggleWishlist(this, '<%= productId %>');
+  "
+>
+  <i class="fa-regular fa-heart"></i>
+</button>

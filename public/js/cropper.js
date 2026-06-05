@@ -58,7 +58,7 @@ function initCropper({input, preview, aspectRatio = 1}) {
 function updateCroppedBlob() {
   if (!currentCropper) return;
 
-  currentCropper.getCroppedCanvas({width: 500, height: 500}).toBlob((blob) => {
+  currentCropper.getCroppedCanvas({width: 500, height: 800}).toBlob((blob) => {
     croppedBlobData = blob;
   }, "image/png");
 }

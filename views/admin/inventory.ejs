@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    body { background-color: #fafafa; color: #111; font-size: 14px; }
+    .inventory-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 0; }
+    .table th { font-weight: 600; text-uppercase: uppercase; font-size: 12px; letter-spacing: 0.5px; color: #666; background-color: #f8f9fa; }
+    .product-thumbnail { width: 50px; height: 65px; object-fit: cover; background: #f0f0f0; border: 1px solid #eee; }
+    .low-stock-alert { background-color: #fff3cd; color: #856404; font-weight: bold; }
+    .stock-input { width: 80px; text-align: center; border-radius: 0; border: 1px solid #ccc; font-weight: 500; }
+    .filter-btn { border-radius: 0; font-size: 13px; font-weight: 500; }
+    .filter-btn.active { background-color: #000; color: #fff; border-color: #000; }
+    
+    .color-preview-dot {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      background-color: var(--variant-dynamic-color, #ccc);
+    }
+
+    /* Style Pagination to match clean admin layout */
+    .pagination .page-link { color: #000; border-radius: 0; border-color: #e5e5e5; }
+    .pagination .page-item.active .page-link { background-color: #000; border-color: #000; color: #fff; }
+    .pagination .page-link:focus { box-shadow: none; }
+  </style>
+</head>
+<body>
+ <%- include("../partials/sidebar") %>
+<div class="container-fluid py-5 px-md-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <div>
+      <h1 class="h3 text-uppercase tracking-wide m-0">Inventory Control Panel</h1>
+      <p class="text-muted small mb-0">Monitor variant storage pools, manage stock parameters, and handle reorder alerts.</p>
+    </div>
+    
+    <div class="d-flex gap-2">
+      <a href="/admin/inventory?status=all&q=<%= searchQuery %>" class="btn btn-outline-dark filter-btn <%= currentFilter !== 'lowStock' ? 'active' : '' %>">All Items</a>
+      <a href="/admin/inventory?status=lowStock&q=<%= searchQuery %>" class="btn btn-outline-danger filter-btn <%= currentFilter === 'lowStock' ? 'active' : '' %>">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> Low Stock Warning
+      </a>
+    </div>
+  </div>
+
+  <div class="card inventory-card p-3 mb-4 shadow-sm">
+    <form action="/admin/inventory" method="GET" class="row g-2">
+      <input type="hidden" name="status" value="<%= currentFilter %>">
+      <div class="col-md-10">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="<%= searchQuery %>" class="form-control border-start-0 shadow-none ps-0 rounded-0" placeholder="Search parameters via product titles...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-dark w-100 rounded-0 text-uppercase tracking-wider fw-bold">Query</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card inventory-card shadow-sm overflow-hidden mb-4">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 table-hover">
+        <thead>
+          <tr>
+            <th class="ps-4" style="width: 80px;">Item Image</th>
+            <th>Item Particular Details</th>
+            <th>Size Attributes</th>
+            <th>Colorway Matrix</th>
+            <th>Unit Pricing</th>
+            <th style="width: 150px;">Available Stocks</th>
+            <th>Status Assessment</th>
+            <th class="text-end pe-4">System Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (inventory.length === 0) { %>
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">No variant storage items found matching the selected rules.</td>
+            </tr>
+          <% } else { %>
+            <% inventory.forEach(item => { %>
+              <tr class="<%= item.isLowStock ? 'low-stock-alert' : '' %>">
+                <td class="ps-4">
+                  <img src="<%= item.image %>" class="product-thumbnail" alt="">
+                </td>
+                <td>
+                  <span class="fw-bold text-dark d-block"><%= item.name %></span>
+                  <small class="text-muted">ID: <%= item.variantId %></small>
+                </td>
+                <td><span class="badge bg-light text-dark border rounded-0 px-2.5 py-1.5"><%= item.size %></span></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="color-preview-dot" style="--variant-dynamic-color: <%= item.color.toLowerCase() %>;"></span>
+                    <span class="text-capitalize small"><%= item.color %></span>
+                  </div>
+                </td>
+                <td class="fw-medium">₹<%= item.finalPrice %></td>
+                <td>
+                  <input type="number" id="input-<%= item.productId %>-<%= item.variantId %>" value="<%= item.stock %>" min="0" class="form-control form-control-sm stock-input">
+                </td>
+                <td>
+                  <% if (item.isLowStock) { %>
+                    <span class="text-danger fw-bold small text-uppercase"><i class="bi bi-arrow-down-circle-fill me-1"></i> Low Stock (&lt;=<%= threshold %>)</span>
+                  <% } else { %>
+                    <span class="text-success fw-bold small text-uppercase"><i class="bi bi-check-circle-fill me-1"></i> Healthy Pool</span>
+                  <% } %>
+                </td>
+                <td class="text-end pe-4">
+                  <button type="button" onclick="saveStockInline('<%= item.productId %>', '<%= item.variantId %>')" class="btn btn-sm btn-dark rounded-0 px-3 text-uppercase tracking-wider fw-bold style-btn">
+                    Save Changes
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <% if (totalPages > 1) { %>
+    <nav aria-label="Inventory navigation matrix" class="d-flex justify-content-center mt-4">
+      <ul class="pagination shadow-sm">
+        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+          <a class="page-link" href="/admin/inventory?page=<%= currentPage - 1 %>&status=<%= currentFilter %>&q=<%= searchQuery %>" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+
+        <% for (let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+            <a class="page-link" href="/admin/inventory?page=<%= i %>&status=<%= currentFilter %>&q=<%= searchQuery %>"><%= i %></a>
+          </li>
+        <% } %>
+
+        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+          <a class="page-link" href="/admin/inventory?page=<%= currentPage + 1 %>&status=<%= currentFilter %>&q=<%= searchQuery %>" aria-label="Next">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  <% } %>
+</div>
+
+<script>
+  async function saveStockInline(productId, variantId) {
+    const inputElement = document.getElementById(`input-${productId}-${variantId}`);
+    const updatedValue = parseInt(inputElement.value, 10);
+
+    if (isNaN(updatedValue) || updatedValue < 0) {
+      alert("Please provide a valid stock level baseline matching integer constraints.");
+      return;
+    }
+
+    try {
+      const targetEndpoint = `/admin/inventory/update/${productId}/${variantId}`;
+      const response = await fetch(targetEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newStock: updatedValue })
+      });
+
+      const serverData = await response.json();
+      if (serverData.success) {
+        window.location.reload();
+      } else {
+        alert(serverData.message || "Internal variant database modification error.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network processing disruption context timed out.");
+    }
+  }
+</script>
+</body>
+</html>

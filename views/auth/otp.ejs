@@ -114,9 +114,29 @@ updateTimer();
 
 setInterval(updateTimer, 1000);
 
-      // resendForm.addEventListener("submit", () => {
-      //   localStorage.removeItem(storageKey);
-      // });
+   inputs[0].addEventListener("paste", (e) => {
+  e.preventDefault();
+
+  const pastedData = e.clipboardData.getData("text").trim();
+
+  // only numbers
+  const otp = pastedData.replace(/\D/g, "").slice(0, 6);
+
+  otp.split("").forEach((char, index) => {
+    if (inputs[index]) {
+      inputs[index].value = char;
+    }
+  });
+
+  // update hidden field
+  let fullOtp = "";
+  inputs.forEach((i) => (fullOtp += i.value));
+  otpValue.value = fullOtp;
+
+  // move focus to last filled input
+  const nextIndex = Math.min(otp.length, 5);
+  inputs[nextIndex].focus();
+});
     </script>
   </body>
 </html>

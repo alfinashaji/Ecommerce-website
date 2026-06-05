@@ -61,16 +61,17 @@
       const otpValue = document.getElementById("otpValue");
 
       inputs.forEach((input, index) => {
-        input.addEventListener("input", () => {
-          if (input.value && index < inputs.length - 1) {
-            inputs[index + 1].focus();
-          }
+      input.addEventListener("input", () => {
+  input.value = input.value.replace(/\D/g, "");
 
-          let otp = "";
-          inputs.forEach((i) => (otp += i.value));
-          otpValue.value = otp;
-        });
+  if (input.value && index < inputs.length - 1) {
+    inputs[index + 1].focus();
+  }
 
+  let otp = "";
+  inputs.forEach((i) => (otp += i.value));
+  otpValue.value = otp;
+});
         input.addEventListener("keydown", (e) => {
           if (e.key === "Backspace" && !input.value && index > 0) {
             inputs[index - 1].focus();
@@ -101,6 +102,30 @@
           clearInterval(timer);
         }
       }, 1000);
+
+      inputs[0].addEventListener("paste", (e) => {
+  e.preventDefault();
+
+  const pastedData = e.clipboardData.getData("text").trim();
+
+  // keep only numbers
+  const otp = pastedData.replace(/\D/g, "").slice(0, 6);
+
+  otp.split("").forEach((char, index) => {
+    if (inputs[index]) {
+      inputs[index].value = char;
+    }
+  });
+
+  // update hidden input
+  let fullOtp = "";
+  inputs.forEach((i) => (fullOtp += i.value));
+  otpValue.value = fullOtp;
+
+  // move focus
+  const nextIndex = Math.min(otp.length, 5);
+  inputs[nextIndex].focus();
+});
     </script>
   </body>
 </html>
