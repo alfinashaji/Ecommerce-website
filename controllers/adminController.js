@@ -10,7 +10,6 @@ exports.getDashboard = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     const result = await adminService.getPaginatedUsers(req.query);
-
     res.render("admin/users", result);
   } catch (err) {
     console.error(err);
@@ -43,16 +42,13 @@ exports.toggleUserStatus = async (req, res) => {
 exports.adminLogin = async (req, res) => {
   try {
     const {email, password} = req.body;
-
     const result = await adminService.authenticateAdmin(email, password);
 
     if (result.error) {
       return res.render("admin/login", {error: result.error});
     }
 
-    delete req.session.userId;
     req.session.adminId = result.admin._id;
-
     console.log("ADMIN SESSION:", req.session);
     res.redirect("/admin/dashboard");
   } catch (err) {
@@ -61,6 +57,7 @@ exports.adminLogin = async (req, res) => {
   }
 };
 
+// Get orders list
 exports.getOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -84,7 +81,6 @@ exports.getOrders = async (req, res) => {
     }
 
     const sortOption = sort === "oldest" ? {createdAt: 1} : {createdAt: -1};
-
     const totalOrders = await Order.countDocuments(filter);
 
     const orders = await Order.find(filter)
@@ -102,11 +98,12 @@ exports.getOrders = async (req, res) => {
       sort,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send("Server Error");
   }
 };
 
+// Search orders
 exports.searchOrders = async (req, res) => {
   try {
     const keyword = req.query.q || "";
@@ -123,47 +120,128 @@ exports.searchOrders = async (req, res) => {
     res.render("admin/orders", {
       orders,
       selectedStatus: "",
+      search: keyword,
+      sort: "newest",
+      currentPage: 1,
+      totalPages: 1,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).send("Server Error processing search");
   }
 };
 
 exports.getOrderDetails = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
+    const {id, productId} = req.params;
+
+    const order = await Order.findById(id)
       .populate("user")
       .populate("products.product");
-
-    res.render("admin/order-details", {order});
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-exports.updateOrderStatus = async (req, res) => {
-  try {
-    const {id} = req.params;
-    const {status} = req.body;
-    console.log("PARAMS:", req.params);
-    console.log("BODY:", req.body);
-    const order = await Order.findById(id);
 
     if (!order) {
       return res.status(404).send("Order not found");
     }
 
-    order.orderStatus = status;
+    let isolatedItem = null;
+    if (productId) {
+      isolatedItem = order.products.find(
+        (p) =>
+          p._id.toString() === productId ||
+          p.product?._id.toString() === productId,
+      );
+    }
 
-    order.products.forEach((item) => {
-      item.status = status;
+    res.render("admin/order-details", {
+      order,
+      item: isolatedItem,
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Server Error");
+  }
+};
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    const {id, productId} = req.params;
+    const {status} = req.body;
+
+    const order = await Order.findById(id).populate("products.product");
+
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
+
+    const item = order.products.find(
+      (p) =>
+        p._id.toString() === productId ||
+        p.product?._id.toString() === productId,
+    );
+
+    if (!item) {
+      return res.status(404).send("Product item not found in this order");
+    }
+
+    if (item.status === "Cancelled" && status !== "Cancelled") {
+      return res.status(400).send("Cancelled items cannot be updated");
+    }
+
+    if (item.status === "Returned") {
+      return res.status(400).send("Returned items cannot be updated");
+    }
+
+    const statusFlow = [
+      "Placed",
+      "Processing",
+      "Shipped",
+      "Out For Delivery",
+      "Delivered",
+    ];
+
+    if (
+      item.status !== "Cancelled" &&
+      item.status !== "Returned" &&
+      status !== "Cancelled"
+    ) {
+      const currentIndex = statusFlow.indexOf(item.status);
+      const newIndex = statusFlow.indexOf(status);
+
+      if (currentIndex !== -1 && newIndex !== -1 && newIndex < currentIndex) {
+        return res.status(400).send("Cannot move order status backwards");
+      }
+    }
+
+    const product = item.product;
+
+    if (status === "Cancelled" && item.status !== "Cancelled") {
+      if (product && product.variants) {
+        const variant = product.variants.find(
+          (v) => v.size === item.size && v.color === item.color,
+        );
+        if (variant) {
+          variant.stock += item.quantity;
+          await product.save();
+        }
+      }
+    }
+
+    item.status = status;
+
+    const allItemsCancelled = order.products.every(
+      (p) => p.status === "Cancelled",
+    );
+    if (allItemsCancelled) {
+      order.orderStatus = "Cancelled";
+    } else {
+      order.orderStatus = status;
+    }
 
     await order.save();
 
-    res.redirect("/admin/orders");
+    res.redirect(`/admin/orders/${id}/product/${productId}`);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.redirect("/admin/orders");
   }
 };
@@ -171,31 +249,101 @@ exports.updateOrderStatus = async (req, res) => {
 exports.approveReturn = async (req, res) => {
   try {
     const {orderId, productId} = req.params;
-
     const order = await Order.findById(orderId).populate("products.product");
 
-    const item = order.products.id(productId);
+    if (!order) return res.status(404).send("Order reference not found");
 
+    let item = order.products.id(productId);
     if (!item) {
-      return res.redirect("/admin/orders");
+      item = order.products.find(
+        (p) =>
+          p._id.toString() === productId ||
+          p.product?._id.toString() === productId,
+      );
     }
 
+    if (!item) return res.redirect(`/admin/orders/${orderId}`);
+
+    const currentStatus = (item.returnStatus || "").toLowerCase().trim();
+    if (currentStatus !== "requested") {
+      return res
+        .status(400)
+        .send("No valid return request matching target instance state");
+    }
+
+    const product = item.product;
+
+    item.returnStatus = "approved";
     item.status = "Returned";
 
-    const variant = item.product.variants.find(
-      (v) => v.size === item.size && v.color === item.color,
-    );
-
-    if (variant) {
-      variant.stock += item.quantity;
+    if (product && product.variants) {
+      const variant = product.variants.find(
+        (v) => v.size === item.size && v.color === item.color,
+      );
+      if (variant) {
+        variant.stock += item.quantity;
+      }
+      await product.save();
     }
 
-    await item.product.save();
+    await order.save();
+    res.redirect(`/admin/orders/${orderId}/product/${productId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error executing approval parameters sequence");
+  }
+};
+
+exports.rejectReturn = async (req, res) => {
+  try {
+    const {orderId, productId} = req.params;
+    const order = await Order.findById(orderId);
+
+    if (!order) return res.status(404).send("Order reference not found");
+
+    let item = order.products.id(productId);
+    if (!item) {
+      item = order.products.find((p) => p._id.toString() === productId);
+    }
+
+    if (!item) return res.redirect(`/admin/orders/${orderId}`);
+
+    const currentStatus = (item.returnStatus || "").toLowerCase().trim();
+    if (currentStatus !== "requested") {
+      return res
+        .status(400)
+        .send("No target instance match found requesting actions");
+    }
+
+    item.returnStatus = "rejected";
     await order.save();
 
-    res.redirect(`/admin/orders/${orderId}`);
-  } catch (error) {
-    console.log(error);
-    res.redirect("/admin/orders");
+    res.redirect(`/admin/orders/${orderId}/product/${productId}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error logging rejection properties parameters");
   }
+};
+
+exports.getSingleProductDetails = async (req, res) => {
+  const {orderId, productId} = req.params;
+
+  const order = await Order.findById(orderId)
+    .populate("user")
+    .populate("products.product");
+
+  if (!order) {
+    return res.redirect("/admin/orders");
+  }
+
+  const item = order.products.id(productId);
+
+  if (!item) {
+    return res.redirect("/admin/orders");
+  }
+
+  res.render("admin/order-details", {
+    order,
+    item,
+  });
 };

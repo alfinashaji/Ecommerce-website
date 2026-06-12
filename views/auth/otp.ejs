@@ -48,7 +48,6 @@
           <input type="text" maxlength="1" class="otp-input" />
         </div>
 
-        <!-- hidden real otp -->
         <input type="hidden" name="otp" id="otpValue" />
 
         <div class="timer">
@@ -58,7 +57,7 @@
         <button type="submit" class="btn btn-custom">Submit</button>
       </form>
 
-      <!-- RESEND -->
+    
       <form action="/api/auth/resend-otp" method="POST" class="mb-5" id="resendForm">
         <button id="resendBtn" class="resend-btn" disabled>Resend OTP</button>
       </form>
@@ -119,7 +118,6 @@ setInterval(updateTimer, 1000);
 
   const pastedData = e.clipboardData.getData("text").trim();
 
-  // only numbers
   const otp = pastedData.replace(/\D/g, "").slice(0, 6);
 
   otp.split("").forEach((char, index) => {
@@ -128,12 +126,10 @@ setInterval(updateTimer, 1000);
     }
   });
 
-  // update hidden field
   let fullOtp = "";
   inputs.forEach((i) => (fullOtp += i.value));
   otpValue.value = fullOtp;
 
-  // move focus to last filled input
   const nextIndex = Math.min(otp.length, 5);
   inputs[nextIndex].focus();
 });

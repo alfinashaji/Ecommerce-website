@@ -136,64 +136,63 @@ body{ background:#f8f9fa; }
 <tbody>
 
 <% orders.forEach(order => { %>
-<tr>
 
-<td><%= order.orderId %></td>
+  <% order.products.forEach(item => { %>
 
-<td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+    <tr>
 
-<td><%= order.user?.fullName %></td>
+      <td><%= order.orderId %></td>
 
-<td><%= order.user?.email %></td>
+      <td>
+        <img
+          src="<%= item.productImage %>"
+          width="50"
+          height="50"
+        >
+        <%= item.productName %>
+      </td>
 
-<td>₹<%= order.totalAmount %></td>
+      <td><%= item.quantity %></td>
 
-<td>
+      <td>₹<%= item.finalPrice %></td>
 
-<% if(order.orderStatus === "Pending"){ %>
-<span class="badge bg-secondary">Pending</span>
-<% } %>
+      <td>
+        <span class="badge bg-info">
+          <%= item.status %>
+        </span>
+      </td>
 
-<% if(order.orderStatus === "Shipped"){ %>
-<span class="badge bg-info">Shipped</span>
-<% } %>
+      <td>
 
-<% if(order.orderStatus === "Out For Delivery"){ %>
-<span class="badge bg-warning text-dark">Out For Delivery</span>
-<% } %>
-
-<% if(order.orderStatus === "Delivered"){ %>
-<span class="badge bg-success">Delivered</span>
-<% } %>
-
-<% if(order.orderStatus === "Cancelled"){ %>
-<span class="badge bg-danger">Cancelled</span>
-<% } %>
-
-</td>
-
-<td class="d-flex gap-2">
-
-  <a href="/admin/orders/<%= order._id %>" class="btn btn-sm btn-primary">
-    View
-  </a>
-
- <button
-  class="btn btn-sm btn-warning"
-  onclick="openEditModal('<%= order._id %>', '<%= order.orderStatus %>')"
+        <a
+  href="/admin/orders/<%= order._id %>/product/<%= item._id %>"
+  class="btn btn-primary btn-sm"
 >
-  Edit
-</button>
+  View
+</a>
 
-</td>
+        <button
+          class="btn btn-warning btn-sm"
+          onclick="openEditModal(
+  '<%= order._id %>',
+  '<%= item._id %>',
+  '<%= item.status %>'
+)"
+        >
+          Edit
+        </button>
 
-</tr>
+      </td>
+
+    </tr>
+
+  <% }) %>
+
 <% }) %>
 
 </tbody>
 </table>
 
-<!-- PAGINATION (FIXED PRESERVATION) -->
 <div class="d-flex justify-content-center mt-4">
 <nav>
 <ul class="pagination">
@@ -264,13 +263,13 @@ body{ background:#f8f9fa; }
 <script>
 let currentOrderId = null;
 
-function openEditModal(orderId, currentStatus) {
-  currentOrderId = orderId;
+// Update the script block at the bottom of orders.ejs
+function openEditModal(orderId, productId, currentStatus) {
+  // Update the form action path to pass both IDs cleanly
+  document.getElementById("editOrderForm").action = 
+    `/admin/orders/${orderId}/product/${productId}/status`;
 
   document.getElementById("statusSelect").value = currentStatus;
-
-  document.getElementById("editOrderForm").action =
-    `/admin/orders/${orderId}/status`;
 
   const modal = new bootstrap.Modal(document.getElementById("editOrderModal"));
   modal.show();

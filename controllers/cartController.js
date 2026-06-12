@@ -27,14 +27,13 @@ exports.addToCart = async (req, res) => {
       req.params.productId,
     );
 
-    res.json({
-      success: true,
-    });
+    res.json({success: true});
   } catch (err) {
     console.log(err);
 
-    res.status(500).json({
+    res.status(400).json({
       success: false,
+      message: err.message || "Failed to add to cart",
     });
   }
 };
@@ -101,5 +100,19 @@ exports.removeCartItem = async (req, res) => {
     res.status(500).json({
       success: false,
     });
+  }
+};
+
+exports.getCartCount = async (req, res) => {
+  try {
+    const cart = await cartService.getCart(req.user.id);
+
+    const cartCount = cart
+      ? cart.items.reduce((sum, item) => sum + item.quantity, 0)
+      : 0;
+
+    res.json({cartCount});
+  } catch (err) {
+    res.status(500).json({cartCount: 0});
   }
 };

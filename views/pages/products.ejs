@@ -144,6 +144,7 @@
         justify-content: center;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         transition: 0.3s;
+        z-index: 2;
       }
 
       .discount-badge {
@@ -308,9 +309,7 @@
             : 0;
 
           const hasOffer = finalPrice < basePrice;
-
           const discount = p.category?.discount;
-
           let discountText = "";
 
           if (hasOffer && discount) {
@@ -328,17 +327,15 @@
                 <div class="card product-card border-0 shadow-sm">
                   <div class="product-img-container">
                     <img src="${img}" alt="${p.name}">
-                   <button
-  type="button"
-  class="wishlist-btn"
-  onclick="
-    event.stopPropagation();
-    event.preventDefault();
-    toggleWishlist(this, '${p._id}');
-  "
->
-  <i class="fa-regular fa-heart"></i>
-</button>
+                    <button
+                      type="button"
+                      class="wishlist-btn"
+                      onclick="
+                        event.stopPropagation();
+                        event.preventDefault();
+                        toggleWishlist('${p._id}', this.querySelector('i'));
+                      "
+                    >
                       <i class="fa-regular fa-heart"></i>
                     </button>
                   </div>
@@ -456,6 +453,60 @@
       }
 
       loadProducts();
+
+      async function toggleWishlist(productId, icon) {
+        try {
+          const response = await fetch(`/wishlist/toggle/${productId}`, {
+            method: "POST",
+          });
+          const data = await response.json();
+
+          if (data.success) {
+            if (typeof refreshWishlistCount === "function")
+              refreshWishlistCount();
+
+            if (data.action === "added") {
+              icon.classList.remove("fa-regular");
+              icon.classList.add("fa-solid");
+              icon.style.color = "red";
+            } else {
+              icon.classList.remove("fa-solid");
+              icon.classList.add("fa-regular");
+              icon.style.color = "";
+            }
+
+            if (typeof showWishlistMessage === "function") {
+              showWishlistMessage(
+                data.action === "added"
+                  ? "Added to wishlist"
+                  : "Removed from wishlist",
+              );
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      async function addToCart(productId) {
+        try {
+          const res = await fetch(`/cart/add/${productId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            if (typeof refreshCartCount === "function") refreshCartCount();
+            if (typeof showCartMessage === "function")
+              showCartMessage("Product added to cart");
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
     </script>
   </body>
 </html>

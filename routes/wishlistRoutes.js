@@ -12,5 +12,5 @@ router.delete(
   auth,
   wishlistController.removeWishlistItem,
 );
-
+router.get("/count", auth, wishlistController.getWishlistCount);
 module.exports = router;

@@ -33,6 +33,15 @@ exports.getCheckoutDetails = async (userId) => {
     addresses,
     pricing: {subtotal, tax, shipping, total},
   };
+
+  cart.items = cart.items.filter((item) => {
+    const product = item.product;
+    const variant = product.variants.find(
+      (v) => v.size === item.size && v.color === item.color,
+    );
+
+    return product.isListed && variant && variant.stock >= item.quantity;
+  });
 };
 
 exports.createCODOrder = async (userId, addressId) => {
@@ -52,18 +61,34 @@ exports.createCODOrder = async (userId, addressId) => {
   let subtotal = 0;
 
   for (const item of cart.items) {
-    const variant = item.product.variants.find(
+    const product = item.product;
+
+    if (!product.isListed) {
+      throw new Error(`${product.name} is no longer available`);
+    }
+
+    const variant = product.variants.find(
       (v) => v.size === item.size && v.color === item.color,
     );
+
+    if (!variant) {
+      throw new Error(`Variant not available for ${product.name}`);
+    }
+
+    if (variant.stock < item.quantity) {
+      throw new Error(
+        `Insufficient stock for ${product.name} (${item.size}/${item.color})`,
+      );
+    }
 
     const price = variant.finalPrice || variant.price;
 
     subtotal += price * item.quantity;
 
     products.push({
-      product: item.product._id,
-      productName: item.product.name,
-      productImage: variant.images[0],
+      product: product._id,
+      productName: product.name,
+      productImage: variant.images?.[0] || "",
 
       quantity: item.quantity,
       size: item.size,
@@ -72,9 +97,18 @@ exports.createCODOrder = async (userId, addressId) => {
       price,
       finalPrice: price,
     });
-
-    // Reduce stock
-    variant.stock -= item.quantity;
+    await Product.updateOne(
+      {
+        _id: product._id,
+        "variants.size": item.size,
+        "variants.color": item.color,
+      },
+      {
+        $inc: {
+          "variants.$.stock": -item.quantity,
+        },
+      },
+    );
   }
 
   const shipping = subtotal > 2000 ? 0 : 99;
@@ -83,7 +117,6 @@ exports.createCODOrder = async (userId, addressId) => {
   const order = new Order({
     orderId: `ORD${Date.now()}`,
     user: userId,
-
     address: {
       name: selectedAddress.fullName,
       phone: selectedAddress.phone,
@@ -92,13 +125,10 @@ exports.createCODOrder = async (userId, addressId) => {
       state: selectedAddress.state,
       pincode: selectedAddress.postalCode,
     },
-
     products,
-
     subtotal,
     shipping,
     totalAmount,
-
     paymentMethod: "COD",
     paymentStatus: "Pending",
     orderStatus: "Placed",

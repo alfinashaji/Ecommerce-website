@@ -93,7 +93,7 @@
                       <div class="d-flex align-items-center flex-wrap gap-1 mt-1">
                         <% if (variant && variant.finalPrice < variant.price) { %>
                           <span class="fw-bold text-dark fs-6">
-                            Key: ₹<%= Number(variant.finalPrice).toFixed(2) %>
+                            Price: ₹<%= Number(variant.finalPrice).toFixed(2) %>
                           </span>
                           <span class="text-muted text-decoration-line-through small ms-1">
                             ₹<%= variant.price %>

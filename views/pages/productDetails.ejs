@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= product.name %></title>
 
-    <!-- Bootstrap 5 CSS -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
 
-    <!-- Drift Zoom CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/drift-zoom/dist/drift-basic.min.css"
     />
 
-    <!-- Drift Zoom JS -->
     <script src="https://cdn.jsdelivr.net/npm/drift-zoom/dist/Drift.min.js"></script>
 
     <style>
@@ -58,10 +55,9 @@
         position: relative;
         display: flex;
         align-items: stretch;
-        overflow: visible !important; /* Required for Zoom Pane to show */
+        overflow: visible !important;
       }
 
-      /* Left Side: Images */
       .main-img-container {
         position: relative;
         background-color: var(--bg-light);
@@ -70,7 +66,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        /* Removed overflow:hidden to allow zoom pane visibility */
       }
 
       .main-img {
@@ -260,7 +255,6 @@
       </nav>
 
       <div class="row g-0 product-box">
-        <!-- LEFT: IMAGES -->
         <div class="col-lg-7">
           <div class="main-img-container">
             <img
@@ -273,11 +267,9 @@
             <div id="zoomPane"></div>
           </div>
           <div id="thumbContainer" class="d-flex flex-wrap thumb-container ps-md-0">
-            <!-- Thumbnails injected by JS -->
-          </div>
+            </div>
         </div>
 
-        <!-- RIGHT: PRODUCT INFO -->
         <div class="col-lg-5">
           <div class="right-panel">
             <h1 class="product-title"><%= product.name %></h1>
@@ -301,20 +293,19 @@
               <button id="buyNowBtn" class="btn btn-action btn-buy" onclick="buyNow()">
                 Buy Now
               </button>
-             <button
-  class="btn btn-action"
-  style="background:#fff;border:1px solid #ddd;"
-  onclick="toggleWishlist()"
->
- Add to Wishlist
-</button>
+              <button
+                class="btn btn-action"
+                style="background:#fff;border:1px solid #ddd;"
+                onclick="toggleWishlist()"
+              >
+                Add to Wishlist
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- RELATED PRODUCTS SECTION -->
     <div class="container product-container mt-5 pt-5 border-top">
       <h3 class="product-title mb-5 text-center" style="font-size: 20px; letter-spacing: 2px;">Related Products</h3>
       <div class="row">
@@ -416,39 +407,39 @@
 
         const priceBox = document.getElementById("price");
 
-if (v.finalPrice < v.price) {
-  priceBox.innerHTML = `
-    <span style="font-size:22px;font-weight:bold;">
-      ₹${v.finalPrice.toLocaleString()}
-    </span>
+        if (v.finalPrice < v.price) {
+          priceBox.innerHTML = `
+            <span style="font-size:22px;font-weight:bold;">
+              ₹${v.finalPrice.toLocaleString()}
+            </span>
 
-    <span style="
-      text-decoration: line-through;
-      color: #888;
-      margin-left: 10px;
-      font-size: 15px;
-    ">
-      ₹${v.price.toLocaleString()}
-    </span>
+            <span style="
+              text-decoration: line-through;
+              color: #888;
+              margin-left: 10px;
+              font-size: 15px;
+            ">
+              ₹${v.price.toLocaleString()}
+            </span>
 
-    <span style="
-      background:#f8d7da;
-      color:#dc3545;
-      padding:2px 8px;
-      margin-left:10px;
-      font-size:12px;
-      font-weight:bold;
-    ">
-      OFFER
-    </span>
-  `;
-} else {
-  priceBox.innerHTML = `
-    <span style="font-size:22px;font-weight:bold;">
-      ₹${v.price.toLocaleString()}
-    </span>
-  `;
-}
+            <span style="
+              background:#f8d7da;
+              color:#dc3545;
+              padding:2px 8px;
+              margin-left:10px;
+              font-size:12px;
+              font-weight:bold;
+            ">
+              OFFER
+            </span>
+          `;
+        } else {
+          priceBox.innerHTML = `
+            <span style="font-size:22px;font-weight:bold;">
+              ₹${v.price.toLocaleString()}
+            </span>
+          `;
+        }
 
         const cartBtn = document.getElementById("addToCartBtn");
         const buyBtn = document.getElementById("buyNowBtn");
@@ -487,81 +478,86 @@ if (v.finalPrice < v.price) {
         setupZoom();
       }
 
-     async function addToCart() {
-  const variant = variants[selectedVariantIndex];
+      async function addToCart() {
+        const variant = variants[selectedVariantIndex];
 
-  try {
-    const res = await fetch(`/cart/add/<%= product._id %>`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        size: variant.size,
-        color: variant.color,
-        quantity: 1
-      })
-    });
+        try {
+          const res = await fetch(`/cart/add/<%= product._id %>`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              size: variant.size,
+              color: variant.color,
+              quantity: 1
+            })
+          });
 
-    const data = await res.json();
+          const data = await res.json();
 
-    if (data.success) {
-      alert("Product added to cart");
-    } else {
-      alert(data.message);
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
+          if (data.success) {
+            refreshCartCount();
+            showCartMessage("Product added to cart");
+          } else {
+            alert(data.message);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
       async function buyNow() {
-  const variant = variants[selectedVariantIndex];
+        const variant = variants[selectedVariantIndex];
 
-  try {
-    const res = await fetch(`/cart/add/<%= product._id %>`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        size: variant.size,
-        color: variant.color,
-        quantity: 1
-      })
-    });
+        try {
+          const res = await fetch(`/cart/add/<%= product._id %>`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              size: variant.size,
+              color: variant.color,
+              quantity: 1
+            })
+          });
 
-    const data = await res.json();
+          const data = await res.json();
 
-    if (data.success) {
-      window.location.href = "/cart";
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
+          if (data.success) {
+            window.location.href = "/cart";
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
 
       window.onload = init;
 
       async function toggleWishlist() {
-  try {
-    const res = await fetch(`/wishlist/toggle/<%= product._id %>`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+        try {
+          const res = await fetch(`/wishlist/toggle/<%= product._id %>`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            refreshWishlistCount();
+            showWishlistMessage(
+              data.action === "added"
+                ? "Added to wishlist"
+                : "Removed from wishlist"
+            );
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    });
-
-    const data = await res.json();
-
-    if (data.added) {
-      alert("Added to wishlist");
-    } else {
-      alert("Removed from wishlist");
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
     </script>
   </body>
 </html>

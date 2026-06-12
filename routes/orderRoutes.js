@@ -14,11 +14,15 @@ router.get("/checkout/order-success", auth, (req, res) => {
 });
 
 router.get("/orders", auth, checkoutController.getOrders);
-router.get("/orders/details/:id", auth, checkoutController.getOrderDetails);
+router.get(
+  "/orders/details/:orderId/:productId",
+  auth,
+  checkoutController.getOrderProductDetails,
+);
 
 // cancel order
 
-router.post("/orders/:id/cancel", auth, checkoutController.cancelOrder);
+// router.post("/orders/:id/cancel", auth, checkoutController.cancelOrder);
 
 // cancel sigle product
 
@@ -42,6 +46,12 @@ router.get("/orders/search", auth, checkoutController.searchOrders);
 
 // download
 
-router.get("/orders/:id/invoice", auth, checkoutController.downloadInvoice);
+router.get("/orders/:id/invoice", auth, checkoutController.getInvoicePage);
+
+router.get(
+  "/orders/:id/invoice/download",
+  auth,
+  checkoutController.downloadInvoice,
+);
 
 module.exports = router;

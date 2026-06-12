@@ -88,13 +88,23 @@
 
           <div class="address-card mb-3">
 
-            <div>
-              <div class="address-name"><%= addr.name %></div>
-              <div class="address-text">
-                <%= addr.street %>, <%= addr.city %>, 
-                <%= addr.state %> - <%= addr.pincode %> -------- , Address Type : Home
-              </div>
-            </div>
+           <div>
+  <div class="address-name">
+    <%= addr.name %>
+
+    <% if(addr.isDefault){ %>
+      <span class="badge bg-success ms-2">
+        Default
+      </span>
+    <% } %>
+  </div>
+
+  <div class="address-text">
+    <%= addr.street %>, <%= addr.city %>,
+    <%= addr.state %> - <%= addr.pincode %>
+    -------- , Address Type : <%= addr.addressType %>
+  </div>
+</div>
 
             <div class="d-flex gap-2">
               <a href="/profile/address/<%= addr._id %>/edit" class="btn btn-dark">

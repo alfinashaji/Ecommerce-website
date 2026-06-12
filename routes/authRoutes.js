@@ -109,12 +109,20 @@ router.get("/login", (req, res) => {
   });
 });
 
-// LOGOUT
+// logout
 router.post("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.set("Cache-Control", "no-store"); // prevent back button access
-    res.redirect("/api/auth/login");
-  });
+  delete req.session.userId;
+  if (req.logout) {
+    req.logout((err) => {
+      if (err) console.error("Passport logout error:", err);
+    });
+  }
+  if (res.locals.user) {
+    delete res.locals.user;
+  }
+
+  res.set("Cache-Control", "no-store");
+  res.redirect("/api/auth/login");
 });
 
 module.exports = router;

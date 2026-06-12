@@ -1,6 +1,6 @@
 const checkoutService = require("../services/checkoutService");
 const Order = require("../models/orderModel");
-const PDFDocument = require("pdfkit");
+const puppeteer = require("puppeteer");
 
 exports.getCheckoutPage = async (req, res) => {
   try {
@@ -73,43 +73,33 @@ exports.getOrderDetails = async (req, res) => {
   res.render("pages/order-details", {order});
 };
 
-// cancel order
+exports.getOrderProductDetails = async (req, res) => {
+  try {
+    const {orderId, productId} = req.params;
 
-exports.cancelOrder = async (req, res) => {
-  console.log("CANCEL ORDER HIT");
-  const {reason} = req.body;
+    const order = await Order.findOne({
+      _id: orderId,
+      user: req.user.id,
+    }).populate("products.product");
 
-  const order = await Order.findOne({
-    _id: req.params.id,
-    user: req.user.id,
-  }).populate("products.product");
-
-  if (!order) {
-    return res.redirect("/orders");
-  }
-
-  order.orderStatus = "Cancelled";
-
-  for (const item of order.products) {
-    item.status = "Cancelled";
-    item.cancelReason = reason || "";
-
-    const product = item.product;
-
-    const variant = product.variants.find(
-      (v) => v.size === item.size && v.color === item.color,
-    );
-
-    if (variant) {
-      variant.stock += item.quantity;
+    if (!order) {
+      return res.redirect("/orders");
     }
 
-    await product.save();
+    const item = order.products.id(productId);
+
+    if (!item) {
+      return res.redirect("/orders");
+    }
+
+    res.render("pages/order-details", {
+      order,
+      item,
+    });
+  } catch (err) {
+    console.error(err);
+    res.redirect("/orders");
   }
-
-  await order.save();
-
-  res.redirect(`/orders/details/${order._id}`);
 };
 
 // cancel single product
@@ -155,32 +145,50 @@ exports.cancelProduct = async (req, res) => {
 
   await order.save();
 
-  res.redirect(`/orders/details/${order._id}`);
+  res.redirect(`/orders/details/${order._id}/${item._id}`);
 };
 
 // order return
-
 exports.returnProduct = async (req, res) => {
-  const {reason} = req.body;
+  try {
+    const {reason} = req.body;
 
-  if (!reason) {
-    return res.status(400).send("Return reason required");
+    if (!reason || reason.trim().length < 10) {
+      return res
+        .status(400)
+        .send("Please provide a valid return reason (min 10 characters).");
+    }
+
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.redirect("/orders");
+    }
+
+    const item = order.products.id(req.params.productId);
+
+    if (!item) {
+      return res.redirect("/orders");
+    }
+
+    if (order.orderStatus !== "Delivered") {
+      return res
+        .status(400)
+        .send("Cannot return this order as it has not been delivered.");
+    }
+
+    item.returnStatus = "requested";
+    item.returnReason = reason.trim();
+
+    await order.save();
+
+    res.redirect(`/orders/details/${order._id}/${item._id}`);
+  } catch (error) {
+    console.error("Error submitting product return:", error);
+    res
+      .status(500)
+      .send("Something went wrong processing your return request.");
   }
-
-  const order = await Order.findById(req.params.orderId);
-
-  const item = order.products.id(req.params.productId);
-
-  if (order.orderStatus !== "Delivered") {
-    return res.status(400).send("Cannot return");
-  }
-
-  item.status = "Return Requested";
-  item.returnReason = reason;
-
-  await order.save();
-
-  res.redirect(`/orders/details/${order._id}`);
 };
 
 // serach order
@@ -198,39 +206,83 @@ exports.searchOrders = async (req, res) => {
 
   res.render("pages/orders", {orders});
 };
+exports.getInvoicePage = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+    });
 
-exports.downloadInvoice = async (req, res) => {
-  const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.redirect("/orders");
+    }
 
-  const doc = new PDFDocument();
-
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=invoice-${order.orderId}.pdf`,
-  );
-
-  res.setHeader("Content-Type", "application/pdf");
-
-  doc.pipe(res);
-
-  doc.fontSize(20).text("Invoice");
-
-  doc.moveDown();
-
-  doc.text(`Order ID: ${order.orderId}`);
-  doc.text(`Date: ${order.createdAt}`);
-
-  doc.moveDown();
-
-  order.products.forEach((item) => {
-    doc.text(
-      `${item.productName} x ${item.quantity} = ₹${item.finalPrice * item.quantity}`,
+    const deliveredItems = order.products.filter(
+      (item) => item.status === "Delivered",
     );
-  });
 
-  doc.moveDown();
+    if (deliveredItems.length === 0) {
+      return res.redirect("/orders");
+    }
 
-  doc.text(`Total: ₹${order.totalAmount}`);
+    res.render("pages/invoice", {
+      order,
+      deliveredItems,
+    });
+  } catch (error) {
+    console.error(error);
+    res.redirect("/orders");
+  }
+};
+exports.downloadInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
 
-  doc.end();
+    if (!order) {
+      return res.status(404).send("Order not found");
+    }
+
+    const browser = await puppeteer.launch({
+      headless: true,
+    });
+
+    const page = await browser.newPage();
+
+    const html = await new Promise((resolve, reject) => {
+      req.app.render(
+        "pages/invoice",
+        {
+          order,
+          deliveredItems: order.products.filter(
+            (item) => item.status === "Delivered",
+          ),
+        },
+        (err, html) => {
+          if (err) reject(err);
+          else resolve(html);
+        },
+      );
+    });
+
+    await page.setContent(html, {
+      waitUntil: "networkidle0",
+    });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+    });
+
+    await browser.close();
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=invoice-${order.orderId}.pdf`,
+    });
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to download invoice");
+  }
 };

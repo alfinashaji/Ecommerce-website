@@ -12,7 +12,11 @@ const addressSchema = new mongoose.Schema(
     city: String,
     state: String,
     pincode: String,
-
+    addressType: {
+      type: String,
+      enum: ["Home", "Work", "Other"],
+      default: "Home",
+    },
     isDefault: {
       type: Boolean,
       default: false,

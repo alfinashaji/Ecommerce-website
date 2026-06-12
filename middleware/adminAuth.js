@@ -9,18 +9,16 @@ const adminAuth = async (req, res, next) => {
     const admin = await User.findById(req.session.adminId);
 
     if (!admin || admin.role !== "admin") {
-      return req.session.destroy(() => {
-        res.redirect("/admin/login");
-      });
+      delete req.session.adminId;
+      return res.redirect("/admin/login");
     }
 
     req.admin = admin;
+    res.locals.admin = admin;
     next();
   } catch (err) {
     console.error(err);
-    return req.session.destroy(() => {
-      res.redirect("/admin/login");
-    });
+    return res.redirect("/admin/login");
   }
 };
 

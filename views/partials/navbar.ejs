@@ -121,7 +121,56 @@
       cursor: pointer;
       color: #000;
     }
+.cart-icon {
+  position: relative;
+}
 
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: red;
+  color: white;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.cart-message {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: #198754;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 5px;
+  display: none;
+  z-index: 9999;
+}
+
+.wishlist-icon {
+  position: relative;
+}
+
+.wishlist-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: red;
+  color: white;
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
     /* Responsive adjustments */
     @media (max-width: 992px) {
       .navbar { padding: 10px 20px; }
@@ -156,8 +205,22 @@ value="<%= typeof query !== 'undefined' ? query : '' %>"
 
     
     <div class="nav-right">
-      <a href="/wishlist" class="nav-icon"><i class="fa fa-heart"></i></a>
-      <a href="/cart" class="nav-icon"><i class="fa fa-shopping-cart"></i></a>
+    <a href="/wishlist" class="nav-icon wishlist-icon">
+  <i class="fa fa-heart"></i>
+
+  <span id="wishlistBadge" class="wishlist-badge">
+  <%= typeof wishlistCount !== 'undefined' ? wishlistCount : 0 %>
+</span>
+</a>
+    <a href="/cart" class="nav-icon cart-icon">
+  <i class="fa fa-shopping-cart"></i>
+
+  <span id="cartBadge" class="cart-badge">
+    <%= cartCount || 0 %>
+  </span>
+</a>
+
+
 
       <% if (!locals.user) { %>
         <a href="/api/auth/login">
@@ -170,7 +233,12 @@ value="<%= typeof query !== 'undefined' ? query : '' %>"
       </a>
     </div>
   </div>
-
+<div id="cartMessage" class="cart-message">
+  Product added to cart
+</div>
+<div id="wishlistMessage" class="cart-message">
+  Product Added to wishlist
+</div>
   <script>
     const searchInput = document.getElementById('searchInput');
     const clearBtn = document.getElementById('clearBtn');
@@ -185,12 +253,10 @@ value="<%= typeof query !== 'undefined' ? query : '' %>"
       }
     }
 
-    // Run on every 
     searchInput.addEventListener('input', toggleClearButton);
 
     window.addEventListener('DOMContentLoaded', toggleClearButton);
 
-    // Clear input functionality
     clearBtn.addEventListener('click', () => {
   searchInput.value = '';
   toggleClearButton();
@@ -198,6 +264,60 @@ value="<%= typeof query !== 'undefined' ? query : '' %>"
  
   window.location.href = "/products";
 });
+
+async function refreshCartCount() {
+  try {
+    const res = await fetch("/cart/count");
+    const data = await res.json();
+
+    const badge = document.getElementById("cartBadge");
+
+    if (badge) {
+      badge.innerText = data.cartCount;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+function showCartMessage(message) {
+  const msg = document.getElementById("cartMessage");
+
+  msg.innerText = message;
+  msg.style.display = "block";
+
+  setTimeout(() => {
+    msg.style.display = "none";
+  }, 2000);
+}
+
+function showWishlistMessage(message) {
+  const msg = document.getElementById("wishlistMessage");
+
+  if (!msg) return;
+
+  msg.innerText = message;
+  msg.style.display = "block";
+
+  setTimeout(() => {
+    msg.style.display = "none";
+  }, 2000);
+}
+
+async function refreshWishlistCount() {
+  try {
+    const res = await fetch("/wishlist/count");
+    const data = await res.json();
+
+    const badge = document.getElementById("wishlistBadge");
+
+    if (badge) {
+      badge.innerText = data.wishlistCount || 0;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
   </script>
 </body>
 </html>

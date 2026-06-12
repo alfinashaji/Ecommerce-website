@@ -1,9 +1,14 @@
 const Address = require("../models/addressModel");
 
 exports.createAddress = async (addressData, userId) => {
+  if (addressData.isDefault) {
+    await Address.updateMany({user: userId}, {isDefault: false});
+  }
+
   return await Address.create({
     ...addressData,
     user: userId,
+    isDefault: !!addressData.isDefault,
   });
 };
 
@@ -16,9 +21,22 @@ exports.getAddressById = async (id) => {
 };
 
 exports.updateAddressById = async (id, updateData) => {
-  return await Address.findByIdAndUpdate(id, updateData, {
-    new: true,
-  });
+  const address = await Address.findById(id);
+
+  if (!address) return null;
+
+  if (updateData.isDefault) {
+    await Address.updateMany({user: address.user}, {isDefault: false});
+  }
+
+  return await Address.findByIdAndUpdate(
+    id,
+    {
+      ...updateData,
+      isDefault: !!updateData.isDefault,
+    },
+    {new: true},
+  );
 };
 
 exports.deleteAddressById = async (id) => {

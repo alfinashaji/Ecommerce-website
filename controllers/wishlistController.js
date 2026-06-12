@@ -1,3 +1,4 @@
+const Wishlist = require("../models/wishlistModel");
 const wishlistService = require("../services/wishlistService");
 
 exports.toggleWishlist = async (req, res) => {
@@ -7,11 +8,17 @@ exports.toggleWishlist = async (req, res) => {
       req.params.productId,
     );
 
-    res.json(result);
+    const action = result.added ? "added" : "removed";
+
+    res.json({
+      success: true,
+      action: action,
+    });
   } catch (err) {
     console.log(err);
 
     res.status(500).json({
+      success: false,
       message: "Wishlist failed",
     });
   }
@@ -46,6 +53,22 @@ exports.removeWishlistItem = async (req, res) => {
 
     res.status(500).json({
       success: false,
+    });
+  }
+};
+
+exports.getWishlistCount = async (req, res) => {
+  try {
+    const wishlist = await Wishlist.findOne({
+      user: req.user._id,
+    });
+
+    res.json({
+      wishlistCount: wishlist ? wishlist.products.length : 0,
+    });
+  } catch (err) {
+    res.status(500).json({
+      wishlistCount: 0,
     });
   }
 };

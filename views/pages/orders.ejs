@@ -33,11 +33,11 @@ href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.c
       display: inline-block;
       margin-right: 8px;
     }
-    /* Status Colors */
-    .status-placed { background-color: #ffc107; }   /* Yellow */
-    .status-shipped { background-color: #5bc0de; }  /* Blue */
-    .status-delivered { background-color: #28a745; } /* Green */
-    .status-cancelled { background-color: #dc3545; } /* Red */
+   
+    .status-placed { background-color: #ffc107; } 
+    .status-shipped { background-color: #5bc0de; }  
+    .status-delivered { background-color: #28a745; } 
+    .status-cancelled { background-color: #dc3545; }
     .status-processing {
   background-color: orange;
 }
@@ -131,16 +131,18 @@ if(item.status  === 'Cancelled')
 
             <div class="col-md-4 text-end">
               <% if(item.status  === 'Delivered') { %>
-                <a href="/orders/<%= order._id %>/invoice" class="btn-action">Download Invoice</a>
+               <a
+  href="/orders/<%= order._id %>/invoice"
+  class="btn-action"
+>
+  View Invoice
+</a>
               <% } %>
               
-              <a href="/orders/details/<%= order._id %>" class="btn-action">View Details</a>
-
-              <% if(item.status  === 'Placed' || item.status  === 'Processing') { %>
-                <form action="/orders/<%= order._id %>/product/<%= item._id %>/cancel" method="POST" class="d-inline">
-                   <button type="submit" class="btn-action btn-cancel-text border-0">Cancel Order</button>
-                </form>
-              <% } else if(item.status === 'Delivered') { %>
+              <a href="/orders/details/<%= order._id %>/<%= item._id %>" class="btn-action">
+  View Details
+</a>
+            <% if(item.status === 'Delivered') { %>
 <button
   type="button"
   class="btn-action btn-return-text border-0"
@@ -182,13 +184,23 @@ if(item.status  === 'Cancelled')
             Reason for Return
           </label>
 
-          <textarea
-            name="reason"
-            class="form-control"
-            rows="4"
-            placeholder="Please enter the reason for return..."
-            required
-          ></textarea>
+      <select name="reason" class="form-select mb-3" required>
+  <option value="">Select reason</option>
+  <option value="Size issue">Size issue</option>
+  <option value="Wrong product delivered">Wrong product delivered</option>
+  <option value="Quality issue">Quality issue</option>
+  <option value="Other">Other</option>
+</select>
+
+<textarea
+  name="reasonDetails"
+  class="form-control"
+  rows="3"
+  placeholder="Additional details (optional)"
+></textarea>
+<small class="text-muted">
+  Minimum 10 characters required
+</small>
 
         </div>
 

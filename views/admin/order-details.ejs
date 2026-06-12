@@ -40,249 +40,168 @@ body{
 <div class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-
         <h2>Order Details</h2>
-
-        <a href="/admin/orders" class="btn btn-secondary">
-            Back
-        </a>
-
+        <a href="/admin/orders" class="btn btn-secondary">Back</a>
     </div>
 
-    <!-- Order Info -->
-
     <div class="card mb-4">
-
         <div class="card-body">
-
             <div class="row">
-
                 <div class="col-md-4">
                     <h6>Order ID</h6>
                     <p><%= order.orderId %></p>
                 </div>
-
                 <div class="col-md-4">
                     <h6>Order Date</h6>
                     <p>
                         <%= new Date(order.createdAt).toLocaleDateString() %>
                     </p>
                 </div>
+               <div class="col-md-4">
+    <h6>Status</h6>
 
-                <div class="col-md-4">
-                    <h6>Status</h6>
+    <% if(item.status === "Cancelled"){ %>
+        <span class="badge bg-danger badge-status">
+            Cancelled
+        </span>
 
-                    <span class="badge bg-primary badge-status">
-                        <%= order.orderStatus %>
-                    </span>
-                </div>
+    <% } else if(item.status === "Returned"){ %>
+        <span class="badge bg-dark badge-status">
+            Returned
+        </span>
 
+    <% } else { %>
+        <span class="badge bg-primary badge-status">
+            <%= item.status %>
+        </span>
+    <% } %>
+
+</div>
             </div>
+        </div>
+    </div>
 
+    <div class="card mb-4">
+        <div class="card-header">Customer Information</div>
+        <div class="card-body">
+            <p><strong>Name:</strong> <%= order.user?.name %></p>
+            <p><strong>Email:</strong> <%= order.user?.email %></p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">Delivery Address</div>
+        <div class="card-body">
+            <p><strong><%= order.address.name %></strong></p>
+            <p><%= order.address.street %></p>
+            <p><%= order.address.city %>, <%= order.address.state %></p>
+            <p><%= order.address.pincode %></p>
+            <p><%= order.address.phone %></p>
+        </div>
+    </div>
+
+   <div class="card-body">
+
+    <div class="row border-bottom py-3 align-items-center">
+
+        <div class="col-md-2">
+            <img src="<%= item.productImage %>" class="product-img">
+        </div>
+
+        <div class="col-md-4">
+            <h6><%= item.productName %></h6>
+            <small>Size: <%= item.size %></small><br>
+            <small>Color: <%= item.color %></small>
+        </div>
+
+        <div class="col-md-2">
+            Qty: <%= item.quantity %>
+        </div>
+
+        <div class="col-md-2">
+            ₹<%= item.finalPrice %>
+        </div>
+
+        <div class="col-md-2">
+            <span class="badge bg-info">
+                <%= item.status %>
+            </span>
         </div>
 
     </div>
 
-    <!-- Customer -->
+</div>
 
-    <div class="card mb-4">
-
-        <div class="card-header">
-            Customer Information
-        </div>
-
-        <div class="card-body">
-
-            <p>
-                <strong>Name:</strong>
-                <%= order.user?.name %>
-            </p>
-
-            <p>
-                <strong>Email:</strong>
-                <%= order.user?.email %>
-            </p>
-
-        </div>
-
+<% if (item && item.returnStatus === "requested") { %>
+<div class="card mb-4">
+    <div class="card-header">
+        Return Request
     </div>
 
-    <!-- Address -->
+    <div class="card-body">
 
-    <div class="card mb-4">
+        <p>
+            <strong>Reason:</strong>
+            <%= item.returnReason %>
+        </p>
 
-        <div class="card-header">
-            Delivery Address
-        </div>
+        <form
+            action="/admin/orders/<%= order._id %>/product/<%= item._id %>/approve-return"
+            method="POST"
+            class="d-inline"
+        >
+            <button type="submit" class="btn btn-success">
+                Approve Return
+            </button>
+        </form>
 
-        <div class="card-body">
-
-            <p>
-                <strong><%= order.address.name %></strong>
-            </p>
-
-            <p>
-                <%= order.address.street %>
-            </p>
-
-            <p>
-                <%= order.address.city %>,
-                <%= order.address.state %>
-            </p>
-
-            <p>
-                <%= order.address.pincode %>
-            </p>
-
-            <p>
-                <%= order.address.phone %>
-            </p>
-
-        </div>
+        <form
+            action="/admin/orders/<%= order._id %>/product/<%= item._id %>/reject-return"
+            method="POST"
+            class="d-inline"
+        >
+            <button type="submit" class="btn btn-danger">
+                Reject Return
+            </button>
+        </form>
 
     </div>
-
-    <!-- Products -->
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-            Ordered Products
-        </div>
-
-        <div class="card-body">
-
-            <% order.products.forEach(item => { %>
-
-            <div class="row border-bottom py-3 align-items-center">
-
-                <div class="col-md-2">
-
-                    <img
-                    src="<%= item.productImage %>"
-                    class="product-img"
-                    alt=""
-                    >
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <h6><%= item.productName %></h6>
-
-                    <small>
-                        Size: <%= item.size %>
-                    </small>
-
-                    <br>
-
-                    <small>
-                        Color: <%= item.color %>
-                    </small>
-
-                </div>
-
-                <div class="col-md-2">
-                    Qty: <%= item.quantity %>
-                </div>
-
-                <div class="col-md-2">
-                    ₹<%= item.finalPrice %>
-                </div>
-
-                <div class="col-md-2">
-
-                    <span class="badge bg-info">
-                        <%= item.status %>
-                    </span>
-
-                </div>
-
-            </div>
-
-            <% if(!item.returnStatus) { %>
-
-<!-- No return request -->
-<small class="text-muted">No return request</small>
-
-<% } else if(item.returnStatus === "requested") { %>
-
-<form action="/admin/orders/<%= order._id %>/product/<%= item._id %>/approve-return" method="POST">
-    <button class="btn btn-success btn-sm">Approve Return</button>
-</form>
-
-<% } else if(item.returnStatus === "approved") { %>
-
-<span class="badge bg-success">Return Approved</span>
-
-<% } else if(item.returnStatus === "rejected") { %>
-
-<span class="badge bg-danger">Return Rejected</span>
-
+</div>
+<p>Return Status: <%= item.returnStatus %></p>
 <% } %>
 
-
-            <% }) %>
-
-        </div>
-
-    </div>
-
-    <!-- Payment -->
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-            Payment Information
-        </div>
-
+<div class="card mb-4">
+    <div class="card-header">Payment Information</div>
         <div class="card-body">
-
-            <p>
-                <strong>Method:</strong>
-                <%= order.paymentMethod %>
-            </p>
-
-            <p>
-                <strong>Status:</strong>
-                <%= order.paymentStatus %>
-            </p>
-
+            <p><strong>Method:</strong> <%= order.paymentMethod %></p>
+            <p><strong>Status:</strong> <%= order.paymentStatus %></p>
         </div>
-
     </div>
-
-    <!-- Total -->
 
     <div class="card">
+    <div class="card-body">
 
-        <div class="card-body">
+        <div class="d-flex justify-content-between">
+            <span>Price</span>
+            <span>₹<%= item.finalPrice %></span>
+        </div>
 
-            <div class="d-flex justify-content-between">
-                <span>Subtotal</span>
-                <span>₹<%= order.subtotal %></span>
-            </div>
+        <div class="d-flex justify-content-between">
+            <span>Quantity</span>
+            <span><%= item.quantity %></span>
+        </div>
 
-            <div class="d-flex justify-content-between">
-                <span>Shipping</span>
-                <span>₹<%= order.shipping %></span>
-            </div>
+        <hr>
 
-            <hr>
-
-            <div class="d-flex justify-content-between">
-
-                <strong>Total Amount</strong>
-
-                <strong>
-                    ₹<%= order.totalAmount %>
-                </strong>
-
-            </div>
-
+        <div class="d-flex justify-content-between">
+            <strong>Total Product Amount</strong>
+            <strong>
+                ₹<%= item.finalPrice * item.quantity %>
+            </strong>
         </div>
 
     </div>
+</div>
 
 </div>
 

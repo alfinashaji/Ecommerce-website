@@ -108,7 +108,6 @@
 
   const pastedData = e.clipboardData.getData("text").trim();
 
-  // keep only numbers
   const otp = pastedData.replace(/\D/g, "").slice(0, 6);
 
   otp.split("").forEach((char, index) => {
@@ -117,12 +116,10 @@
     }
   });
 
-  // update hidden input
   let fullOtp = "";
   inputs.forEach((i) => (fullOtp += i.value));
   otpValue.value = fullOtp;
 
-  // move focus
   const nextIndex = Math.min(otp.length, 5);
   inputs[nextIndex].focus();
 });

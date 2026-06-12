@@ -141,7 +141,27 @@
         </div>
 
         <small id="pincodeError" class="text-danger"></small>
+        <div class="section-title mt-3">ADDRESS TYPE</div>
 
+        <select name="addressType" class="form-control">
+          <option value="Home">Home</option>
+          <option value="Work">Work</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <div class="form-check mt-3">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="isDefault"
+            value="true"
+            id="defaultAddress"
+          />
+
+          <label class="form-check-label" for="defaultAddress">
+            Set as Default Address
+          </label>
+        </div>
         <button class="submit-btn">Submit</button>
       </form>
 

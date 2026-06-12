@@ -1,7 +1,16 @@
+const Product = require("../models/productModel");
 const Cart = require("../models/cartModel");
 const {getCategoryDiscountPrice} = require("../utils/discountHelper");
 
 exports.addToCart = async (userId, productId, size, color) => {
+  const product = await Product.findOne({
+    _id: productId,
+    isListed: true,
+  });
+
+  if (!product) {
+    throw new Error("Product is unavailable or blocked");
+  }
   let cart = await Cart.findOne({user: userId});
 
   if (!cart) {
@@ -51,6 +60,9 @@ exports.getCart = async (userId) => {
     .lean();
 
   if (!cart) return null;
+  cart.items = cart.items.filter(
+    (item) => item.product && item.product.isListed,
+  );
 
   cart.items = cart.items.map((item) => {
     if (item.product && item.product.variants) {

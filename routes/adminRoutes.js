@@ -9,7 +9,9 @@ const {
   adminLogin,
   getOrders,
   getOrderDetails,
+  getSingleProductDetails,
   approveReturn,
+  rejectReturn,
   updateOrderStatus,
 } = require("../controllers/adminController");
 const Category = require("../models/categoryModel");
@@ -62,19 +64,20 @@ router.get("/category-offers", async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.redirect("/admin/dashboard");
-    }
-
-    res.clearCookie("connect.sid");
-    res.redirect("/admin/login");
-  });
+  delete req.session.adminId;
+  if (res.locals.admin) {
+    delete res.locals.admin;
+  }
+  res.redirect("/admin/login");
 });
 
 router.get("/orders", adminAuth, getOrders);
 router.get("/orders/:id", adminAuth, getOrderDetails);
-router.post("/orders/:id/status", adminAuth, updateOrderStatus);
+router.post(
+  "/orders/:id/product/:productId/status",
+  adminAuth,
+  updateOrderStatus,
+);
 router.post(
   "/orders/:orderId/product/:productId/approve-return",
   adminAuth,
@@ -86,6 +89,17 @@ router.post(
   "/inventory/update/:productId/:variantId",
   adminAuth,
   inventoryController.updateVariantStock,
+);
+router.post(
+  "/orders/:orderId/product/:productId/reject-return",
+  adminAuth,
+  rejectReturn,
+);
+
+router.get(
+  "/orders/:orderId/product/:productId",
+  adminAuth,
+  getSingleProductDetails,
 );
 
 module.exports = router;

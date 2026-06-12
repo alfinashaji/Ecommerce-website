@@ -53,9 +53,14 @@ const orderSchema = new mongoose.Schema(
             "Delivered",
             "Cancelled",
             "Returned",
-            "Return Requested",
           ],
           default: "Placed",
+        },
+
+        returnStatus: {
+          type: String,
+          enum: ["none", "requested", "approved", "rejected"],
+          default: "none",
         },
 
         cancelReason: {

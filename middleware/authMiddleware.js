@@ -17,9 +17,9 @@ const auth = async (req, res, next) => {
     if (user.status === "blocked") {
       console.log("BLOCKED USER KICKED:", user.email);
 
-      return req.session.destroy(() => {
-        res.redirect("/api/auth/login");
-      });
+      delete req.session.userId;
+      res.set("Cache-Control", "no-store");
+      return res.redirect("/api/auth/login");
     }
 
     req.user = user;

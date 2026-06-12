@@ -81,7 +81,7 @@ const login = async (req, res) => {
     const {email, password} = req.body;
     const user = await authService.authenticateUser(email, password);
 
-    delete req.session.adminId;
+    // delete req.session.adminId;
     req.session.userId = user._id;
 
     return res.redirect("/home");
