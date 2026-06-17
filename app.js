@@ -11,7 +11,11 @@ const userProductController = require("./controllers/userProductController");
 const path = require("path");
 
 app.use((req, res, next) => {
-  res.set("Cache-Control", "no-store");
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, private",
+    Pragma: "no-cache",
+    Expires: "0",
+  });
   next();
 });
 
@@ -99,14 +103,11 @@ app.use("/profile", auth, require("./routes/profileRoutes"));
 app.use("/profile/address", auth, require("./routes/addressRoutes"));
 app.use("/profile", auth, require("./routes/uploadRoutes"));
 
-// ADMIN ROUTES (Protected via adminAuth)
-// Note: Leave your admin login/logout routes inside 'adminRoutes' UNPROTECTED inside its own router file
 app.use("/admin", require("./routes/adminRoutes"));
 
-// All sub-admin routes protected strictly by adminAuth
 app.use("/admin/category", adminAuth, categoryRoutes);
 app.use("/admin/brand", adminAuth, brandRoutes);
-app.use("/api/product", adminAuth, productRoutes); // Assuming this is an admin API
+app.use("/api/product", adminAuth, productRoutes);
 app.use("/admin/category-offer", adminAuth, categoryOfferRoutes);
 
 // USER ROUTES

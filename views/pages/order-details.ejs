@@ -5,352 +5,412 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+    <style>
+        body {
+            background-color: #EAEDED;
+            font-family: "Amazon Ember", Arial, sans-serif;
+            color: #0F1111;
+        }
+        h2 {
+            font-size: 28px;
+            font-weight: 400;
+        }
+        h6 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0F1111;
+            margin-bottom: 6px;
+        }
+        .text-muted {
+            color: #565959 !important;
+        }
+        /* Amazon Card Layouts */
+        .amzn-card {
+            background: #fff;
+            border: 1px solid #D5D9D9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .amzn-card-header {
+            background-color: #F0F2F2;
+            border-bottom: 1px solid #D5D9D9;
+            padding: 14px 18px;
+            font-size: 14px;
+            color: #565959;
+        }
+        .amzn-card-body {
+            padding: 14px 18px;
+            font-size: 14px;
+        }
+        /* Amazon Buttons */
+        .btn-amzn-primary {
+            background: #FFD814;
+            border: 1px solid #FCD200;
+            border-radius: 8px;
+            color: #0F1111;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,.5);
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        .btn-amzn-primary:hover {
+            background: #F7CA00;
+            border-color: #F2C200;
+            color: #0F1111;
+        }
+        .btn-amzn-secondary {
+            background: #FFFFFF;
+            border: 1px solid #D5D9D9;
+            border-radius: 8px;
+            color: #0F1111;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,.5);
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        .btn-amzn-secondary:hover {
+            background: #F7FAFA;
+            border-color: #D5D9D9;
+            color: #0F1111;
+        }
+        .btn-amzn-danger {
+            background: #C40000;
+            border: 1px solid #B40000;
+            border-radius: 8px;
+            color: #FFFFFF;
+            box-shadow: 0 2px 5px 0 rgba(213,217,217,.5);
+            font-size: 13px;
+            padding: 6px 12px;
+        }
+        .btn-amzn-danger:hover {
+            background: #A30000;
+            border-color: #920000;
+            color: #FFFFFF;
+        }
+        /* Custom Status Colors */
+        .status-accent {
+            color: #B12704;
+            font-weight: 700;
+        }
+        .status-success {
+            color: #007600;
+            font-weight: 700;
+        }
+        /* Product links/titles mimic */
+        .product-title {
+            color: #007185;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .product-title:hover {
+            color: #C7511F;
+            text-decoration: underline;
+        }
+        .price-tag {
+            color: #B12704;
+            font-size: 16px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
 
 <%- include("../partials/navbar") %>
 
+<div class="container py-4" style="max-width: 1000px;">
 
-<div class="container py-5">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2>Order Details</h2>
-
-            <p class="mb-0">
-                Order ID:
-                <strong><%= order.orderId %></strong>
+            <p class="text-muted mb-0">
+                Ordered on <%= new Date(order.createdAt).toLocaleDateString() %> <span class="mx-2">|</span> Order ID: <strong><%= order.orderId %></strong>
             </p>
-
-            <small class="text-muted">
-                Ordered on
-                <%= new Date(order.createdAt).toLocaleDateString() %>
-            </small>
         </div>
 
-       <% if(item.status === "Delivered"){ %>
-<div>
-    <a
-        href="/orders/<%= order._id %>/invoice"
-        class="btn btn-outline-dark"
-    >
-        View Invoice
-    </a>
-</div>
-<% } %>
-
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-body">
-
-            <div class="row">
-
-                <div class="col-md-4">
-    <h6>Order Status</h6>
-
-    <% if(item.status === "Cancelled"){ %>
-
-        <span class="badge bg-danger">
-            Cancelled
-        </span>
-
-    <% } else if(item.status === "Returned"){ %>
-
-        <span class="badge bg-dark">
-            Returned
-        </span>
-
-    <% } else if(item.returnStatus &&
-                item.returnStatus.toLowerCase() === "requested"){ %>
-
-        <span class="badge bg-warning text-dark">
-            Return Requested
-        </span>
-
-    <% } else { %>
-
-        <span class="badge bg-success">
-            <%= item.status %>
-        </span>
-
-    <% } %>
-</div>
-<% if(item.status === "Placed" || item.status === "Processing"){ %>
-
-    <div class="mt-3">
-       <button
-    type="button"
-    class="btn btn-outline-danger"
-    data-bs-toggle="modal"
-    data-bs-target="#cancelModal"
->
-    Cancel Product
-</button>
-    </div>
-
-<% } %>
-                <div class="col-md-4">
-                    <h6>Payment Method</h6>
-
-                    <p><%= order.paymentMethod %></p>
-                </div>
-
-                <div class="col-md-4">
-                    <h6>Payment Status</h6>
-
-                    <span class="badge bg-warning text-dark">
-                        <%= order.paymentStatus %>
-                    </span>
-                </div>
-
-            </div>
-
-        </div>
-    </div>
-
-    <div class="card mb-4">
-
-        <div class="card-header">
-            Delivery Address
-        </div>
-
-        <div class="card-body">
-
-            <strong><%= order.address.name %></strong>
-
-            <p class="mb-1">
-                <%= order.address.street %>
-            </p>
-
-            <p class="mb-1">
-                <%= order.address.city %>,
-                <%= order.address.state %>
-            </p>
-
-            <p class="mb-1">
-                <%= order.address.pincode %>
-            </p>
-
-            <p>
-                <%= order.address.phone %>
-            </p>
-
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <div class="card-header">
-            Product Details
-        </div>
-
-        <div class="card-body">
-
-            <div class="row border-bottom py-3 align-items-center">
-
-                <div class="col-md-4">
-
-                    <h6>
-                        <%= item.productName %>
-                    </h6>
-
-                    <small>
-                        Size: <%= item.size %>
-                    </small>
-
-                    <br>
-
-                    <small>
-                        Color: <%= item.color %>
-                    </small>
-
-                </div>
-
-                <div class="col-md-2">
-                    Qty: <%= item.quantity %>
-                </div>
-
-                <div class="col-md-2">
-                    ₹<%= item.finalPrice %>
-                </div>
-
-                <div class="col-md-4">
-
-                    <% if(item.status === "Placed"){ %>
-                        <span class="badge bg-secondary">Placed</span>
-
-                    <% } else if(item.status === "Processing"){ %>
-                        <span class="badge bg-warning text-dark">Processing</span>
-
-                    <% } else if(item.status === "Shipped"){ %>
-                        <span class="badge bg-info">Shipped</span>
-
-                    <% } else if(item.status === "Out For Delivery"){ %>
-                        <span class="badge bg-primary">Out For Delivery</span>
-
-                    <% } else if(item.status === "Delivered"){ %>
-                        <span class="badge bg-success">Delivered</span>
-
-                    <% } else if(item.status === "Cancelled"){ %>
-                        <span class="badge bg-danger">Cancelled</span>
-
-                    <% } else if(item.status === "Return Requested" || (item.returnStatus && item.returnStatus.toLowerCase().trim() === 'requested')){ %>
-                        <span class="badge bg-warning text-dark">Return Requested</span>
-
-                    <% } else if(item.status === "Returned" || (item.returnStatus && item.returnStatus.toLowerCase().trim() === 'approved')){ %>
-                        <span class="badge bg-success">Returned</span>
-                    <% } %>
-
-                    <% if(item.returnReason){ %>
-                        <div class="mt-2">
-                            <small class="text-danger">
-                                Return Reason:
-                                <%= item.returnReason %>
-                            </small>
-                        </div>
-                    <% } %>
-
-                    <% if(item.cancelReason){ %>
-                        <div class="mt-2">
-                            <small class="text-danger">
-                                Cancel Reason:
-                                <%= item.cancelReason %>
-                            </small>
-                        </div>
-                    <% } %>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-<!-- 
-    <% if(order.orderStatus === "Placed" || order.orderStatus === "Processing"){ %>
-
-    <div class="card mt-4">
-
-        <div class="card-body">
-
-            <h5 class="mb-3">
-                Cancel Entire Order
-            </h5>
-
-            <form
-                action="/orders/<%= order._id %>/cancel"
-                method="POST"
-            >
-
-                <textarea
-                    name="reason"
-                    class="form-control mb-3"
-                    placeholder="Reason (optional)"
-                ></textarea>
-
-                <button
-                    type="submit"
-                    class="btn btn-danger"
+        <% if(order.products.some(p => p.status === "Delivered")) { %>
+            <div>
+                <a
+                    href="/orders/<%= order._id %>/invoice"
+                    class="btn btn-amzn-secondary"
                 >
-                    Cancel Order
-                </button>
-
-            </form>
-
-        </div>
-
+                    View Invoice
+                </a>
+            </div>
+        <% } %>
     </div>
 
-    <% } %> -->
+    <div class="amzn-card mb-4">
+        <div class="amzn-card-header">
+            <div class="row text-center text-md-start">
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <h6>SHIPPING ADDRESS</h6>
+                    <div class="text-dark">
+                        <strong><%= order.address.name %></strong>
+                        <div class="text-muted mt-1" style="font-size: 13px; line-height: 1.4;">
+                            <%= order.address.street %><br>
+                            <%= order.address.city %>, <%= order.address.state %> - <%= order.address.pincode %><br>
+                            Phone: <%= order.address.phone %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <h6>PAYMENT METHOD</h6>
+                    <p class="text-muted mb-1"><%= order.paymentMethod %></p>
+                    <h6>PAYMENT STATUS</h6>
+                    <span class="badge bg-light text-dark border"><%= order.paymentStatus %></span>
+                </div>
+                <div class="col-md-4">
+                    <h6>ORDER STATUS</h6>
+                    <p class="status-accent mb-2"><%= order.orderStatus %></p>
+                    
+                    <% if(order.orderStatus === "Placed" || order.orderStatus === "Processing"){ %>
+                        <button
+                            class="btn btn-amzn-secondary w-100 btn-sm mt-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#cancelOrderModal"
+                        >
+                            Cancel Entire Order
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
 
-</div>
-<div class="modal fade" id="cancelModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="amzn-card">
+        <div class="amzn-card-header bg-white">
+            <h5 class="mb-0" style="font-size: 18px; font-weight: 700;">Products in Order</h5>
+        </div>
 
-            <form
-                action="/orders/<%= order._id %>/product/<%= item._id %>/cancel"
-                method="POST"
-            >
+        <div class="amzn-card-body p-0">
+            <% order.products.forEach(item => { %>
 
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        Cancel Product
-                    </h5>
+                <div class="row mx-0 border-bottom py-4 px-3 align-items-start">
 
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                    ></button>
+                    <div class="col-sm-3 col-md-2 text-center mb-3 mb-sm-0">
+                        <img
+                            src="<%= item.productImage %>"
+                            alt="<%= item.productName %>"
+                            class="img-fluid"
+                            style="max-height:120px; object-fit: contain;"
+                        >
+                    </div>
+
+                    <div class="col-sm-9 col-md-5 mb-3 mb-md-0">
+                        <span class="product-title d-block mb-1 fs-6">
+                            <%= item.productName %>
+                        </span>
+
+                        <div class="text-muted small">
+                            <span class="d-block">Size: <strong><%= item.size %></strong></span>
+                            <span class="d-block">Color: <strong><%= item.color %></strong></span>
+                            <span class="d-block mt-1 text-dark">Qty: <%= item.quantity %></span>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <div class="text-muted small d-md-none">Price</div>
+                        <div class="price-tag">₹<%= item.finalPrice %></div>
+                    </div>
+
+                    <div class="col-6 col-md-3 text-end text-md-start">
+                        <div class="text-muted small d-md-none mb-1">Status</div>
+                        
+                        <% if(item.status === "Placed"){ %>
+                            <span class="d-block fw-bold text-primary mb-1">Placed</span>
+                        <% } else if(item.status === "Processing"){ %>
+                            <span class="d-block fw-bold text-warning mb-1">Processing</span>
+                        <% } else if(item.status === "Shipped"){ %>
+                            <span class="d-block fw-bold text-info mb-1">Shipped</span>
+                        <% } else if(item.status === "Out For Delivery"){ %>
+                            <span class="d-block fw-bold text-muted mb-1" style="color: #FA8900 !important;">Out For Delivery</span>
+                        <% } else if(item.status === "Delivered"){ %>
+                            <span class="d-block status-success mb-1"> Delivered</span>
+                        <% } else if(item.status === "Cancelled"){ %>
+                            <span class="d-block text-danger text-decoration-line-through mb-1">Cancelled</span>
+                        <% } else if(item.status === "Returned"){ %>
+                            <span class="d-block text-secondary mb-1">Returned</span>
+                        <% } %>
+
+                        <% if(item.returnStatus === "requested"){ %>
+                            <div class="mt-1">
+                                <span class="badge bg-warning text-dark border">Return Requested</span>
+                            </div>
+                        <% } %>
+
+                        <% if(item.returnReason){ %>
+                            <div class="mt-1">
+                                <small class="text-danger d-block" style="font-size: 12px;">
+                                    <strong>Return Reason:</strong> <%= item.returnReason %>
+                                </small>
+                            </div>
+                        <% } %>
+
+                        <% if(item.cancelReason){ %>
+                            <div class="mt-1">
+                                <small class="text-danger d-block" style="font-size: 12px;">
+                                    <strong>Cancel Reason:</strong> <%= item.cancelReason %>
+                                </small>
+                            </div>
+                        <% } %>
+
+                        <div class="mt-3">
+                            <% if(item.status === "Placed" || item.status === "Processing"){ %>
+                                <button
+                                    type="button"
+                                    class="btn btn-amzn-secondary btn-sm w-100 mb-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#cancelProductModal"
+                                    data-orderid="<%= order._id %>"
+                                    data-productid="<%= item._id %>"
+                                    onclick="setCancelIds(this)"
+                                >
+                                    Cancel Item
+                                </button>
+                            <% } %>
+
+                            <% if(item.status === "Delivered"){ %>
+                               <button
+                                    type="button"
+                                    class="btn btn-amzn-primary btn-sm w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#returnProductModal"
+                                    data-orderid="<%= order._id %>"
+                                    data-productid="<%= item._id %>"
+                                    onclick="setReturnIds(this)"
+                                >
+                                    Return Item
+                                </button>
+                            <% } %>
+                        </div>
+<a
+    href="/orders/details/<%= order._id %>/<%= item._id %>"
+    class="btn btn-amzn-secondary btn-sm w-100 mb-2"
+>
+    View Item Details
+</a>
+                    </div>
+
                 </div>
 
+            <% }) %>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cancelProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            <form id="cancelProductForm" method="POST">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-weight-bold">Cancel Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
                 <div class="modal-body">
+                    <label class="form-label text-secondary small fw-bold">Reason for Cancellation</label>
+                    <select name="reason" class="form-select" required>
+                        <option value="">Select a reason</option>
+                        <option value="Changed my mind">Changed my mind</option>
+                        <option value="Ordered by mistake">Ordered by mistake</option>
+                        <option value="Found better price">Found better price</option>
+                        <option value="Delivery taking too long">Delivery taking too long</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-amzn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-amzn-danger">Confirm Cancellation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-                    <label class="form-label">
-                        Reason for Cancellation
-                    </label>
+<div class="modal fade" id="cancelOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            <form action="/orders/<%= order._id %>/cancel" method="POST">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-weight-bold">Cancel Entire Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label text-secondary small fw-bold">Reason for Cancellation</label>
+                    <select name="reason" class="form-select" required>
+                        <option value="">Select a reason</option>
+                        <option value="Changed my mind">Changed my mind</option>
+                        <option value="Ordered by mistake">Ordered by mistake</option>
+                        <option value="Found better price">Found better price</option>
+                        <option value="Delivery taking too long">Delivery taking too long</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-amzn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-amzn-danger">Confirm Cancellation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-                    <select
-                        name="reason"
-                        class="form-select"
-                        required
-                    >
-                        <option value="">
-                            Select a reason
-                        </option>
-
-                        <option value="Changed my mind">
-                            Changed my mind
-                        </option>
-
-                        <option value="Ordered by mistake">
-                            Ordered by mistake
-                        </option>
-
-                        <option value="Found better price">
-                            Found better price
-                        </option>
-
-                        <option value="Delivery taking too long">
-                            Delivery taking too long
-                        </option>
-
-                        <option value="Other">
-                            Other
-                        </option>
+<div class="modal fade" id="returnProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-3 border-0 shadow">
+            <form id="returnProductForm" method="POST">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-weight-bold">Return Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label text-secondary small fw-bold">Reason for Return</label>
+                    <select name="reason" class="form-select mb-3" required>
+                        <option value="">Select reason</option>
+                        <option value="Size issue">Size issue</option>
+                        <option value="Wrong product delivered">Wrong product delivered</option>
+                        <option value="Quality issue">Quality issue</option>
+                        <option value="Other">Other</option>
                     </select>
 
+                    <textarea
+                        name="reasonDetails"
+                        class="form-control mb-1"
+                        rows="3"
+                        placeholder="Additional details (optional)"
+                    ></textarea>
+                    <small class="text-muted d-block" style="font-size: 11px;">
+                        Minimum 10 characters required
+                    </small>
                 </div>
-
-                <div class="modal-footer">
-
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Close
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="btn btn-danger"
-                    >
-                        Confirm Cancellation
-                    </button>
-
+                <div class="modal-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-amzn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-amzn-primary">Submit Return Request</button>
                 </div>
-
             </form>
-
         </div>
     </div>
 </div>
-</body>
+
+<script>
+function setCancelIds(button) {
+    const orderId = button.dataset.orderid;
+    const productId = button.dataset.productid;
+
+    document.getElementById("cancelProductForm").action =
+        `/orders/${orderId}/product/${productId}/cancel`;
+}
+
+function setReturnIds(button) {
+    const orderId = button.dataset.orderid;
+    const productId = button.dataset.productid;
+
+    document.getElementById("returnProductForm").action =
+        `/orders/${orderId}/product/${productId}/return`;
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
 </html>

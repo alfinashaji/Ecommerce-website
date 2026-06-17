@@ -77,10 +77,15 @@ exports.getOrderProductDetails = async (req, res) => {
   try {
     const {orderId, productId} = req.params;
 
+    console.log("OrderId:", orderId);
+    console.log("ProductId:", productId);
+
     const order = await Order.findOne({
       _id: orderId,
       user: req.user.id,
     }).populate("products.product");
+
+    console.log("Order Found:", !!order);
 
     if (!order) {
       return res.redirect("/orders");
@@ -88,11 +93,13 @@ exports.getOrderProductDetails = async (req, res) => {
 
     const item = order.products.id(productId);
 
+    console.log("Item Found:", !!item);
+
     if (!item) {
       return res.redirect("/orders");
     }
 
-    res.render("pages/order-details", {
+    res.render("pages/order-item-details", {
       order,
       item,
     });
@@ -148,15 +155,61 @@ exports.cancelProduct = async (req, res) => {
   res.redirect(`/orders/details/${order._id}/${item._id}`);
 };
 
+exports.cancelEntireOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId).populate(
+      "products.product",
+    );
+
+    if (!order) {
+      return res.redirect("/orders");
+    }
+
+    for (const item of order.products) {
+      if (
+        item.status === "Cancelled" ||
+        item.status === "Delivered" ||
+        item.status === "Returned"
+      ) {
+        continue;
+      }
+
+      item.status = "Cancelled";
+      item.cancelReason = req.body.reason || "";
+
+      const product = item.product;
+
+      if (product) {
+        const variant = product.variants.find(
+          (v) => v.size === item.size && v.color === item.color,
+        );
+
+        if (variant) {
+          variant.stock += item.quantity;
+        }
+
+        await product.save();
+      }
+    }
+
+    order.orderStatus = "Cancelled";
+
+    await order.save();
+
+    res.redirect(`/orders/details/${order._id}`);
+  } catch (error) {
+    console.error(error);
+    res.redirect("/orders");
+  }
+};
+
 // order return
 exports.returnProduct = async (req, res) => {
   try {
-    const {reason} = req.body;
+    const {reason, reasonDetails} = req.body;
 
-    if (!reason || reason.trim().length < 10) {
-      return res
-        .status(400)
-        .send("Please provide a valid return reason (min 10 characters).");
+    if (!reason) {
+      return res.status(400).send("Please select a return reason.");
     }
 
     const order = await Order.findById(req.params.orderId);
@@ -171,20 +224,30 @@ exports.returnProduct = async (req, res) => {
       return res.redirect("/orders");
     }
 
-    if (order.orderStatus !== "Delivered") {
-      return res
-        .status(400)
-        .send("Cannot return this order as it has not been delivered.");
+    // Check product delivery status
+    if (item.status !== "Delivered") {
+      return res.status(400).send("Only delivered products can be returned.");
     }
 
+    // Prevent duplicate requests
+    if (item.returnStatus === "requested" || item.returnStatus === "approved") {
+      return res
+        .status(400)
+        .send("Return request already exists for this product.");
+    }
+
+    const finalReason = reasonDetails?.trim()
+      ? `${reason} - ${reasonDetails.trim()}`
+      : reason;
+
     item.returnStatus = "requested";
-    item.returnReason = reason.trim();
+    item.returnReason = finalReason;
 
     await order.save();
 
-    res.redirect(`/orders/details/${order._id}/${item._id}`);
+    res.redirect(`/orders/details/${order._id}`);
   } catch (error) {
-    console.error("Error submitting product return:", error);
+    console.error("Error submitting return request:", error);
     res
       .status(500)
       .send("Something went wrong processing your return request.");

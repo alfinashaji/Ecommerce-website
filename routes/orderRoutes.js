@@ -14,6 +14,9 @@ router.get("/checkout/order-success", auth, (req, res) => {
 });
 
 router.get("/orders", auth, checkoutController.getOrders);
+
+router.get("/orders/details/:id", auth, checkoutController.getOrderDetails);
+
 router.get(
   "/orders/details/:orderId/:productId",
   auth,
@@ -30,6 +33,12 @@ router.post(
   "/orders/:orderId/product/:productId/cancel",
   auth,
   checkoutController.cancelProduct,
+);
+
+router.post(
+  "/orders/:orderId/cancel",
+  auth,
+  checkoutController.cancelEntireOrder,
 );
 
 // return order

@@ -3,224 +3,330 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Orders</title>
+  <title>Your Orders</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link
-rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
-/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+  
   <style>
-    body { background-color: #fff; color: #000; }
-    .search-container { background-color: #f0f0f0; padding: 10px; border-radius: 4px; }
-    .search-input { border: none; background: transparent; width: 100%; outline: none; }
-    
-    .order-item-row {
-      border: 1px solid #eee;
-      margin-bottom: 20px;
-      padding: 20px;
-      transition: all 0.3s ease;
+    body { 
+        background-color: #EAEDED; 
+        color: #0F1111; 
+        font-family: "Amazon Ember", Arial, sans-serif;
     }
+    h2 {
+        font-size: 28px;
+        font-weight: 400;
+        margin-bottom: 20px;
+    }
+    
+    /* Amazon Search & Filters bar */
+    .amzn-search-bar {
+        background: #ffffff;
+        border: 1px solid #D5D9D9;
+        border-radius: 8px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .amzn-select-filter {
+        border: none;
+        border-right: 1px solid #D5D9D9;
+        background-color: #F0F2F2;
+        padding: 10px 15px;
+        font-size: 14px;
+        border-top-left-radius: 7px;
+        border-bottom-left-radius: 7px;
+        outline: none;
+        color: #565959;
+    }
+    .amzn-select-filter:hover { background-color: #E3E6E6; color: #0F1111; }
+    .amzn-search-input {
+        border: none;
+        padding: 8px 15px;
+        font-size: 14px;
+        width: 100%;
+        outline: none;
+    }
+    .amzn-search-btn {
+        background: #FEBD69;
+        border: none;
+        padding: 10px 20px;
+        border-top-right-radius: 7px;
+        border-bottom-right-radius: 7px;
+        transition: background 0.2s;
+    }
+    .amzn-search-btn:hover { background: #F3A847; }
+
+   
+    .amzn-order-card {
+        background: #fff;
+        border: 1px solid #D5D9D9;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .amzn-order-header {
+        background-color: #F0F2F2;
+        border-bottom: 1px solid #D5D9D9;
+        padding: 14px 18px;
+        font-size: 12px;
+        color: #565959;
+    }
+    .amzn-order-header strong {
+        color: #0F1111;
+        font-size: 13px;
+    }
+    .amzn-order-body {
+        padding: 18px;
+    }
+    
+ 
     .product-img {
-      width: 100px;
-      height: 120px;
-      object-fit: cover;
-      background-color: #f9f9f9;
+        width: 90px;
+        height: 90px;
+        object-fit: contain;
+        background-color: #fff;
+    }
+    .product-name-link {
+        color: #007185;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+    }
+    .product-name-link:hover {
+        color: #C7511F;
+        text-decoration: underline;
+    }
+    
+  
+    .status-container {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
     }
     .status-dot {
-      height: 12px;
-      width: 12px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
+        height: 10px;
+        width: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
     }
-   
-    .status-placed { background-color: #ffc107; } 
-    .status-shipped { background-color: #5bc0de; }  
-    .status-delivered { background-color: #28a745; } 
-    .status-cancelled { background-color: #dc3545; }
-    .status-processing {
-  background-color: orange;
-}
 
-    .btn-action {
-      border: 1px solid #eee;
-      background: #fff;
-      border-radius: 5px;
-      padding: 8px 15px;
-      font-size: 14px;
-      color: #333;
-      text-decoration: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      margin-left: 10px;
+    .status-delivered {
+        color: #007600 !important;
+        font-weight: 600;
     }
-    .btn-action:hover { background: #f8f9fa; color: #000; }
-    .btn-cancel-text { color: #dc3545; border-color: #f8d7da; }
-    .btn-return-text { color: #dc3545; border-color: #f8d7da; }
+    .status-cancelled {
+        color: #B12704 !important;
+        font-weight: 600;
+    }
+    .status-returned {
+        color: #565959 !important;
+        font-weight: 600;
+    }
+    .status-default {
+        color: #0F1111;
+        font-weight: 600;
+    }
+
+    span.status-dot.status-delivered { background-color: #007600; }
+    span.status-dot.status-cancelled { background-color: #B12704; }
+    span.status-dot.status-returned { background-color: #565959; }
+    span.status-dot.status-default { background-color: #0F1111; }
+
+    /* Amazon Action Buttons layout */
+    .btn-amzn-yellow {
+        background: #FFD814;
+        border: 1px solid #FCD200;
+        border-radius: 8px;
+        color: #0F1111;
+        font-size: 13px;
+        padding: 7px 16px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(213,217,217,.5);
+        font-weight: 500;
+    }
+    .btn-amzn-yellow:hover {
+        background: #F7CA00;
+        border-color: #F2C200;
+        color: #0F1111;
+    }
+    .btn-amzn-white {
+        background: #FFFFFF;
+        border: 1px solid #D5D9D9;
+        border-radius: 8px;
+        color: #0F1111;
+        font-size: 13px;
+        padding: 7px 16px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(213,217,217,.5);
+    }
+    .btn-amzn-white:hover {
+        background: #F7FAFA;
+        border-color: #D5D9D9;
+        color: #0F1111;
+    }
   </style>
 </head>
 <body>
 
 <%- include("../partials/navbar") %>
 
-<div class="container py-5">
-  <div class="row mb-5">
-    <div class="col-md-3">
-      <div class="search-container">
-        <select class="search-input">
-          <option>All Status</option>
+<div class="container py-5" style="max-width: 950px;">
+  
+  <h2>Your Orders</h2>
+
+  <!-- <div class="row mb-4">
+    <div class="col-12">
+      <form action="/orders/search" method="GET" class="amzn-search-bar">
+        <select class="amzn-select-filter d-none d-md-inline-block">
+          <option>Orders history</option>
         </select>
-      </div>
-    </div>
-    <div class="col-md-9">
-      <form action="/orders/search" method="GET" class="search-container d-flex">
-        <input type="text" name="q" class="search-input" placeholder="Product Name / Order ID">
-        <button type="submit" style="border:none; background:none;"><i class="bi bi-search"></i></button>
+        <input type="text" name="q" class="amzn-search-input" placeholder="Search all orders by product name or order ID">
+        <button type="submit" class="amzn-search-btn">
+          <i class="bi bi-search text-dark fs-5"></i>
+        </button>
       </form>
     </div>
-  </div>
+  </div> -->
 
-<% if(!orders || orders.length === 0){ %>
-    <div class="text-center py-5">
-      <p class="text-muted">No orders found.</p>
+  <% if(!orders || orders.length === 0){ %>
+    <div class="amzn-order-card text-center py-5 bg-white">
+      <p class="text-muted mb-0 fs-5">You haven't placed any orders yet.</p>
     </div>
   <% } %>
 
-  <div class="order-list-container border-top pt-4">
+  <div class="order-list-container">
     <% orders.forEach(order => { %>
-      <% order.products.forEach(item => { %>
-        <div class="order-item-row">
-          <div class="row align-items-center">
-            <div class="col-md-1">
-              <img
-  src="<%= item.productImage %>"
-  class="product-img"
-  alt="<%= item.productName %>"
->
+
+      <div class="amzn-order-card">
+        
+        <div class="amzn-order-header">
+          <div class="row align-items-center text-center text-sm-start">
+            <div class="col-6 col-sm-3 mb-2 mb-sm-0">
+              <span class="text-uppercase text-muted d-block" style="font-size: 10px;">ORDER PLACED</span>
+              <strong><%= new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></strong>
             </div>
-
-            <div class="col-md-3 ms-4">
-              <p class="mb-0 fw-medium"><%= item.productName %></p>
-              <small class="text-muted">Size: <%= item.size %> | Qty: <%= item.quantity %></small>
-              <br>
-              <small class="text-muted">ID: <%= order.orderId %></small>
+            <div class="col-6 col-sm-3 mb-2 mb-sm-0">
+              <span class="text-uppercase text-muted d-block" style="font-size: 10px;">TOTAL ITEMS</span>
+              <strong><%= order.products.reduce((acc, p) => acc + p.quantity, 0) %></strong>
             </div>
-
-            <div class="col-md-1 fw-bold fs-5">
-              <%= item.finalPrice %> $
-            </div>
-
-            <div class="col-md-2">
-              <% 
-             let statusClass = 'status-placed';
-
-if(item.status  === 'Processing')
-  statusClass = 'status-processing';
-
-if(item.status  === 'Shipped')
-  statusClass = 'status-shipped';
-
-if(item.status  === 'Delivered')
-  statusClass = 'status-delivered';
-
-if(item.status  === 'Cancelled')
-  statusClass = 'status-cancelled';
-              %>
-              <span class="status-dot <%= statusClass %>"></span>
-              <span class="fw-bold"><%= item.status %></span>
-            </div>
-
-            <div class="col-md-4 text-end">
-              <% if(item.status  === 'Delivered') { %>
-               <a
-  href="/orders/<%= order._id %>/invoice"
-  class="btn-action"
->
-  View Invoice
-</a>
-              <% } %>
-              
-              <a href="/orders/details/<%= order._id %>/<%= item._id %>" class="btn-action">
-  View Details
-</a>
-            <% if(item.status === 'Delivered') { %>
-<button
-  type="button"
-  class="btn-action btn-return-text border-0"
-  data-bs-toggle="modal"
-  data-bs-target="#returnModal"
-  data-orderid="<%= order._id %>"
-  data-productid="<%= item._id %>"
-  onclick="setReturnIds(this)"
->
-  Return
-</button>
-<% } %>
+            <div class="col-12 col-sm-6 text-sm-end mt-1 mt-sm-0">
+              <span class="text-uppercase text-muted d-block" style="font-size: 10px;">ORDER # <%= order.orderId %></span>
+              <a href="/orders/details/<%= order._id %>" class="product-name-link small">View order details</a>
             </div>
           </div>
         </div>
-      <% }) %>
+
+        <div class="amzn-order-body">
+          <% order.products.forEach((item, index) => { %>
+            
+            <div class="row align-items-start <%= index !== 0 ? 'border-top pt-3 mt-3' : '' %>">
+              
+              <div class="col-3 col-sm-2 col-md-1.5 text-center">
+                <img src="<%= item.productImage %>" class="product-img border rounded" alt="Product Image">
+              </div>
+
+              <div class="col-9 col-sm-6 col-md-6 px-3">
+                <a href="/orders/details/<%= order._id %>" class="product-name-link d-block mb-1">
+                  <%= item.productName %>
+                </a>
+                <div class="text-muted small" style="line-height: 1.4;">
+                  <span>Size: <strong><%= item.size %></strong></span> <span class="mx-1 text-light">|</span>
+                  <span>Qty: <strong><%= item.quantity %></strong></span>
+                  <div class="mt-1 price-tag fw-bold text-dark fs-6">₹<%= item.finalPrice %></div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-4 col-md-4 mt-3 mt-sm-0 text-start text-sm-end d-flex flex-column align-items-sm-end gap-2">
+                <div class="status-container">
+                  <%
+                    let statusClass = "status-default";
+                    if(item.status === "Delivered"){
+                        statusClass = "status-delivered";
+                    } else if(item.status === "Cancelled"){
+                        statusClass = "status-cancelled";
+                    } else if(item.status === "Returned"){
+                        statusClass = "status-returned";
+                    }
+                  %>
+                  <span class="status-dot <%= statusClass %>"></span>
+                  <span class="<%= statusClass %>">
+                      <%= item.status %>
+                  </span>
+                </div>
+
+                <div class="mt-1 w-100" style="max-width: 200px;">
+                  <a href="/orders/details/<%= order._id %>" class="btn-amzn-yellow w-100 mb-2 btn-sm">
+                    Track / Manage Item
+                  </a>
+                  
+                  <% if(item.status === 'Delivered' && !item.returnStatus) { %>
+                    <button 
+                      type="button" 
+                      class="btn-amzn-white w-100 btn-sm" 
+                      data-bs-toggle="modal" 
+                      data-bs-target="#returnModal"
+                      data-orderid="<%= order._id %>"
+                      data-productid="<%= item._id %>"
+                      onclick="setReturnIds(this)"
+                    >
+                      Return Item
+                    </button>
+                  <% } else if(item.returnStatus) { %>
+                     <span class="badge bg-secondary d-block p-2 text-uppercase font-monospace" style="font-size:10px;">Return <%= item.returnStatus %></span>
+                  <% } %>
+                </div>
+              </div>
+
+            </div>
+
+          <% }) %>
+        </div>
+
+      </div>
+
     <% }) %>
   </div>
 </div>
-<!-- Return Product Modal -->
-<div class="modal fade" id="returnModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
 
+<div class="modal fade" id="returnModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-3 border-0 shadow">
       <form id="returnForm" method="POST">
-
-        <div class="modal-header">
-          <h5 class="modal-title">Return Product</h5>
-          <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="modal">
-          </button>
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold" style="font-size: 18px;">Return Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body p-4">
+          <label class="form-label text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Reason for Return</label>
+          <select name="reason" class="form-select mb-3" required style="font-size: 14px;">
+            <option value="">Select option...</option>
+            <option value="Size issue">Size issue</option>
+            <option value="Wrong product delivered">Wrong product delivered</option>
+            <option value="Quality issue">Quality issue</option>
+            <option value="Other">Other</option>
+          </select>
 
-          <label class="form-label">
-            Reason for Return
-          </label>
-
-      <select name="reason" class="form-select mb-3" required>
-  <option value="">Select reason</option>
-  <option value="Size issue">Size issue</option>
-  <option value="Wrong product delivered">Wrong product delivered</option>
-  <option value="Quality issue">Quality issue</option>
-  <option value="Other">Other</option>
-</select>
-
-<textarea
-  name="reasonDetails"
-  class="form-control"
-  rows="3"
-  placeholder="Additional details (optional)"
-></textarea>
-<small class="text-muted">
-  Minimum 10 characters required
-</small>
-
+          <label class="form-label text-secondary small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Provide Additional Details</label>
+          <textarea name="reasonDetails" class="form-control" rows="3" placeholder="Why are you returning this item?" style="font-size: 14px;"></textarea>
+          <small class="text-muted mt-1 d-block" style="font-size: 11px;">
+            Minimum of 10 descriptive characters required.
+          </small>
         </div>
 
-        <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-bs-dismiss="modal">
-            Close
-          </button>
-
-          <button
-            type="submit"
-            class="btn btn-danger">
-            Submit Return Request
-          </button>
+        <div class="modal-footer bg-light border-top-0">
+          <button type="button" class="btn-amzn-white py-2" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn-amzn-yellow py-2">Submit Return Request</button>
         </div>
-
       </form>
-
     </div>
   </div>
 </div>

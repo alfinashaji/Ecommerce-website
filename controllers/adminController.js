@@ -67,17 +67,20 @@ exports.getOrders = async (req, res) => {
     const selectedStatus = req.query.status || "";
     const sort = req.query.sort || "newest";
 
+    const error = req.query.error || null;
+
     let filter = {};
 
+    // 1. Fixed Search Query Logic
     if (search) {
       filter.orderId = {
-        $regex: search,
+        $regex: search.trim(),
         $options: "i",
       };
     }
 
     if (selectedStatus) {
-      filter.orderStatus = selectedStatus;
+      filter["products.status"] = selectedStatus;
     }
 
     const sortOption = sort === "oldest" ? {createdAt: 1} : {createdAt: -1};
@@ -92,10 +95,11 @@ exports.getOrders = async (req, res) => {
     res.render("admin/orders", {
       orders,
       currentPage: page,
-      totalPages: Math.ceil(totalOrders / limit),
+      totalPages: Math.ceil(totalOrders / limit) || 1,
       selectedStatus,
       search,
       sort,
+      error,
     });
   } catch (error) {
     console.error(error);
@@ -170,7 +174,9 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findById(id).populate("products.product");
 
     if (!order) {
-      return res.status(404).send("Order not found");
+      return res
+        .status(404)
+        .json({success: false, error: "Order record not found"});
     }
 
     const item = order.products.find(
@@ -180,15 +186,21 @@ exports.updateOrderStatus = async (req, res) => {
     );
 
     if (!item) {
-      return res.status(404).send("Product item not found in this order");
+      return res
+        .status(404)
+        .json({success: false, error: "Product item not found in this order"});
     }
 
     if (item.status === "Cancelled" && status !== "Cancelled") {
-      return res.status(400).send("Cancelled items cannot be updated");
+      return res
+        .status(400)
+        .json({success: false, error: "Cancelled items cannot be updated"});
     }
 
     if (item.status === "Returned") {
-      return res.status(400).send("Returned items cannot be updated");
+      return res
+        .status(400)
+        .json({success: false, error: "Returned items cannot be updated"});
     }
 
     const statusFlow = [
@@ -208,7 +220,9 @@ exports.updateOrderStatus = async (req, res) => {
       const newIndex = statusFlow.indexOf(status);
 
       if (currentIndex !== -1 && newIndex !== -1 && newIndex < currentIndex) {
-        return res.status(400).send("Cannot move order status backwards");
+        return res
+          .status(400)
+          .json({success: false, error: "Cannot move order status backwards"});
       }
     }
 
@@ -239,10 +253,15 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    res.redirect(`/admin/orders/${id}/product/${productId}`);
+    return res.status(200).json({
+      success: true,
+      message: "Order item status updated cleanly.",
+    });
   } catch (error) {
     console.error(error);
-    res.redirect("/admin/orders");
+    return res
+      .status(500)
+      .json({success: false, error: "Internal server processing failure"});
   }
 };
 

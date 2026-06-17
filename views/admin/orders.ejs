@@ -39,16 +39,13 @@ body{ background:#f8f9fa; }
     <h2 class="page-title">Order Management</h2>
 </div>
 
-<!-- FILTERS -->
-<div class="table-container mb-4">
+<!-- <div class="table-container mb-4">
 
 <div class="row g-3">
 
-<!-- SEARCH FORM -->
 <div class="col-md-6">
 <form action="/admin/orders" method="GET">
 
-    <!-- ALWAYS preserve status -->
     <input type="hidden" name="status" value="<%= selectedStatus || '' %>">
 
     <div class="input-group">
@@ -70,11 +67,9 @@ body{ background:#f8f9fa; }
 </form>
 </div>
 
-<!-- STATUS FILTER -->
 <div class="col-md-3">
 <form action="/admin/orders" method="GET">
 
-    <!-- ALWAYS preserve search -->
     <input type="hidden" name="q" value="<%= search || '' %>">
 
     <select name="status" class="form-select" onchange="this.form.submit()">
@@ -108,15 +103,13 @@ body{ background:#f8f9fa; }
 </form>
 </div>
 
-<!-- CLEAR -->
 <div class="col-md-3">
     <a href="/admin/orders" class="btn btn-secondary w-100">Clear Filters</a>
 </div>
 
 </div>
-</div>
+</div> -->
 
-<!-- TABLE -->
 <div class="table-container">
 
 <table class="table table-hover">
@@ -124,10 +117,9 @@ body{ background:#f8f9fa; }
 <thead class="table-dark">
 <tr>
     <th>Order ID</th>
-    <th>Date</th>
-    <th>Customer</th>
-    <th>Email</th>
-    <th>Total</th>
+    <th>Details</th>
+    <th>Quantity</th>
+    <th>Price</th>
     <th>Status</th>
     <th>Actions</th>
 </tr>
@@ -139,7 +131,7 @@ body{ background:#f8f9fa; }
 
   <% order.products.forEach(item => { %>
 
-    <tr>
+    <tr id="row-<%= item._id %>">
 
       <td><%= order.orderId %></td>
 
@@ -148,6 +140,7 @@ body{ background:#f8f9fa; }
           src="<%= item.productImage %>"
           width="50"
           height="50"
+          style="object-fit: contain; margin-right: 8px;"
         >
         <%= item.productName %>
       </td>
@@ -156,8 +149,8 @@ body{ background:#f8f9fa; }
 
       <td>₹<%= item.finalPrice %></td>
 
-      <td>
-        <span class="badge bg-info">
+      <td class="status-cell">
+        <span class="badge bg-info text-dark">
           <%= item.status %>
         </span>
       </td>
@@ -225,11 +218,12 @@ body{ background:#f8f9fa; }
 
 </div>
 </div>
+
 <div class="modal fade" id="editOrderModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
 
-      <form method="POST" id="editOrderForm">
+      <form id="editOrderForm">
 
         <div class="modal-header">
           <h5 class="modal-title">Update Order Status</h5>
@@ -237,21 +231,22 @@ body{ background:#f8f9fa; }
         </div>
 
         <div class="modal-body">
+          
+          <div id="modalErrorBox" class="alert alert-danger d-none"></div>
 
           <select name="status" id="statusSelect" class="form-select">
-
             <option value="Pending">Pending</option>
             <option value="Shipped">Shipped</option>
             <option value="Out For Delivery">Out For Delivery</option>
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
-
           </select>
 
         </div>
 
         <div class="modal-footer">
-          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" id="submitBtn" class="btn btn-success">Save</button>
         </div>
 
       </form>
@@ -259,21 +254,75 @@ body{ background:#f8f9fa; }
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-let currentOrderId = null;
+let currentTargetUrl = "";
+let currentProductId = "";
 
-// Update the script block at the bottom of orders.ejs
 function openEditModal(orderId, productId, currentStatus) {
-  // Update the form action path to pass both IDs cleanly
-  document.getElementById("editOrderForm").action = 
-    `/admin/orders/${orderId}/product/${productId}/status`;
+  currentTargetUrl = `/admin/orders/${orderId}/product/${productId}/status`;
+  currentProductId = productId;
 
-  document.getElementById("statusSelect").value = currentStatus;
+  const errorBox = document.getElementById("modalErrorBox");
+  errorBox.classList.add("d-none");
+  errorBox.innerText = "";
 
-  const modal = new bootstrap.Modal(document.getElementById("editOrderModal"));
+  const statusSelect = document.getElementById("statusSelect");
+  statusSelect.value = currentStatus;
+
+  if (statusSelect.selectedIndex === -1) {
+    statusSelect.value = "Pending";
+  }
+
+  const modalElement = document.getElementById("editOrderModal");
+  const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
   modal.show();
 }
+
+document.getElementById("editOrderForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  const submitBtn = document.getElementById("submitBtn");
+  const errorBox = document.getElementById("modalErrorBox");
+  const statusSelect = document.getElementById("statusSelect");
+  const selectedStatus = statusSelect.value;
+
+  submitBtn.disabled = true;
+  errorBox.classList.add("d-none");
+
+  try {
+    const response = await fetch(currentTargetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ status: selectedStatus })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      errorBox.innerText = data.error || "An unexpected error occurred.";
+      errorBox.classList.remove("d-none");
+    } else {
+      const targetedRow = document.getElementById(`row-${currentProductId}`);
+      if (targetedRow) {
+        const badgeCell = targetedRow.querySelector(".status-cell");
+        badgeCell.innerHTML = `<span class="badge bg-info text-dark">${selectedStatus}</span>`;
+      }
+
+      const modalElement = document.getElementById("editOrderModal");
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      modal.hide();
+    }
+  } catch (err) {
+    errorBox.innerText = "Network transmission failed. Please try again.";
+    errorBox.classList.remove("d-none");
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>

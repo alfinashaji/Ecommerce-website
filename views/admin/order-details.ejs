@@ -174,7 +174,33 @@ body{
     <div class="card-header">Payment Information</div>
         <div class="card-body">
             <p><strong>Method:</strong> <%= order.paymentMethod %></p>
-            <p><strong>Status:</strong> <%= order.paymentStatus %></p>
+          <p><strong>Status:</strong></p>
+
+<% if (item.status === "Delivered") { %>
+
+    <span class="badge bg-success">
+        Paid
+    </span>
+
+<% } else if (item.status === "Returned") { %>
+
+    <span class="badge bg-danger">
+        Refunded
+    </span>
+
+<% }else if (item.status === "Cancelled") { %>
+
+    <span class="badge bg-danger">
+        No Payment
+    </span>
+
+<% } else { %>
+
+    <span class="badge bg-warning text-dark">
+        <%= order.paymentStatus %>
+    </span>
+
+<% } %>
         </div>
     </div>
 

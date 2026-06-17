@@ -496,15 +496,23 @@
               "Content-Type": "application/json",
             },
           });
+
           const data = await res.json();
 
           if (data.success) {
             if (typeof refreshCartCount === "function") refreshCartCount();
-            if (typeof showCartMessage === "function")
+
+            if (typeof showCartMessage === "function") {
               showCartMessage("Product added to cart");
+            } else {
+              alert("Product added to cart");
+            }
+          } else {
+            alert(data.message);
           }
         } catch (err) {
           console.error(err);
+          alert("Something went wrong");
         }
       }
     </script>

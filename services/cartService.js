@@ -11,6 +11,20 @@ exports.addToCart = async (userId, productId, size, color) => {
   if (!product) {
     throw new Error("Product is unavailable or blocked");
   }
+
+  const variant = product.variants.find(
+    (v) => v.size === size && v.color === color,
+  );
+
+  if (!variant) {
+    throw new Error("Selected variant not found");
+  }
+
+  // Stock check
+  if (variant.stock <= 0) {
+    throw new Error("This variant is out of stock");
+  }
+
   let cart = await Cart.findOne({user: userId});
 
   if (!cart) {
@@ -38,6 +52,11 @@ exports.addToCart = async (userId, productId, size, color) => {
   );
 
   if (existingItem) {
+    // Prevent quantity exceeding stock
+    if (existingItem.quantity >= variant.stock) {
+      throw new Error(`Only ${variant.stock} item(s) available in stock`);
+    }
+
     existingItem.quantity += 1;
   } else {
     cart.items.push({
@@ -81,13 +100,27 @@ exports.getCart = async (userId) => {
 };
 
 exports.updateQuantity = async (userId, itemId, action) => {
-  const cart = await Cart.findOne({user: userId});
+  const cart = await Cart.findOne({user: userId}).populate("items.product");
 
   const item = cart.items.id(itemId);
 
-  if (!item) return null;
+  if (!item) {
+    throw new Error("Cart item not found");
+  }
 
   if (action === "increase") {
+    const variant = item.product.variants.find(
+      (v) => v.size === item.size && v.color === item.color,
+    );
+
+    if (!variant) {
+      throw new Error("Variant not found");
+    }
+
+    if (item.quantity >= variant.stock) {
+      throw new Error("Only " + variant.stock + " items available in stock");
+    }
+
     item.quantity += 1;
   }
 
@@ -95,7 +128,7 @@ exports.updateQuantity = async (userId, itemId, action) => {
     item.quantity -= 1;
 
     if (item.quantity <= 0) {
-      item.remove();
+      cart.items.pull(itemId);
     }
   }
 

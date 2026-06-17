@@ -237,38 +237,50 @@
   }
 
   async function updateQuantity(itemId, action) {
-    try {
-      const res = await fetch(`/cart/quantity/${itemId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ action }),
-      });
+  try {
+    const res = await fetch(`/cart/quantity/${itemId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action }),
+    });
 
-      const data = await res.json();
-      if (data.success) {
-        location.reload();
-      }
-    } catch (err) {
-      console.error(err);
+    const data = await res.json();
+
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.message);
     }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+ async function removeCartItem(itemId) {
+  const confirmed = confirm(
+    "Are you sure you want to remove this item from your cart?"
+  );
+
+  if (!confirmed) {
+    return;
   }
 
-  async function removeCartItem(itemId) {
-    try {
-      const res = await fetch(`/cart/remove/${itemId}`, {
-        method: "DELETE",
-      });
+  try {
+    const res = await fetch(`/cart/remove/${itemId}`, {
+      method: "DELETE",
+    });
 
-      const data = await res.json();
-      if (data.success) {
-        location.reload();
-      }
-    } catch (err) {
-      console.error(err);
+    const data = await res.json();
+
+    if (data.success) {
+      location.reload();
     }
+  } catch (err) {
+    console.error(err);
   }
+}
   function goToCheckout() {
     const termsChecked = document.getElementById("termsCheck").checked;
 

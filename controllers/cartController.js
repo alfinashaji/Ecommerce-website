@@ -27,13 +27,16 @@ exports.addToCart = async (req, res) => {
       req.params.productId,
     );
 
-    res.json({success: true});
+    res.json({
+      success: true,
+      message: "Added to cart successfully",
+    });
   } catch (err) {
     console.log(err);
 
     res.status(400).json({
       success: false,
-      message: err.message || "Failed to add to cart",
+      message: err.message,
     });
   }
 };
@@ -79,10 +82,9 @@ exports.updateQuantity = async (req, res) => {
       success: true,
     });
   } catch (err) {
-    console.log(err);
-
-    res.status(500).json({
+    res.status(400).json({
       success: false,
+      message: err.message,
     });
   }
 };
